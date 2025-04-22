@@ -1,7 +1,9 @@
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path
+from chatbot.views import home, chat  # <-- yeh zaruri hai
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('chatbot.urls')),  # chatbot app ke URLs ko include karna
+    path('', home, name='home'),          # for index.html
+    path('chat', chat, name='chat'),      # for API
 ]

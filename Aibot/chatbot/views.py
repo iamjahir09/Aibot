@@ -2,6 +2,7 @@ from django.http import JsonResponse
 from django.shortcuts import render
 import requests
 import time
+import json  # <- for parsing request body
 
 OLLAMA_URL = "http://localhost:11434"
 
@@ -43,7 +44,10 @@ def home(request):
 # Route to handle chat requests
 def chat(request):
     if request.method == "POST":
-        data = request.json
-        question = data.get("message", "")
-        answer = ask_unani_doctor(question)
-        return JsonResponse({"response": answer})
+        try:
+            data = json.loads(request.body.decode('utf-8'))  # ✅ correct way to parse JSON
+            question = data.get("message", "")
+            answer = ask_unani_doctor(question)
+            return JsonResponse({"response": answer})
+        except Exception as e:
+            return JsonResponse({"response": f"⚠️ Error in request: {str(e)}"})
