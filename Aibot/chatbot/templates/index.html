@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>🩺 Unani Doctor Chatbot</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      margin: 0;
+      padding: 40px;
+      text-align: center;
+    }
+
+    h1 {
+      color: #2b7a78;
+    }
+
+    #chat-box {
+      width: 60%;
+      margin: 20px auto;
+      padding: 20px;
+      border-radius: 10px;
+      background-color: #fff;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    input[type="text"] {
+      width: 70%;
+      padding: 10px;
+      font-size: 16px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      margin-right: 10px;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      border-radius: 6px;
+      background-color: #3aafa9;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #2b7a78;
+    }
+
+    #response {
+      margin-top: 20px;
+      font-size: 18px;
+      color: #333;
+      background: #eef9f3;
+      padding: 15px;
+      border-radius: 10px;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🩺 Unani Doctor Chatbot</h1>
+
+  <div id="chat-box">
+    <input type="text" id="userInput" placeholder="Describe your symptoms..." />
+    <button onclick="sendMessage()">Ask</button>
+
+    <div id="response"></div>
+  </div>
+
+  <script>
+    function sendMessage() {
+      const userInput = document.getElementById("userInput").value;
+      const responseDiv = document.getElementById("response");
+      responseDiv.innerText = "⏳ Thinking...";
+
+      fetch("http://localhost:5000/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ message: userInput })
+      })
+      .then(res => res.json())
+      .then(data => {
+        responseDiv.innerText = "🧠 " + data.response;
+      })
+      .catch(err => {
+        responseDiv.innerText = "❌ Error: " + err.message;
+      });
+    }
+  </script>
+
+</body>
+</html>
