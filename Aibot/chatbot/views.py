@@ -128,8 +128,47 @@ def index(request):
 def home(request):
     return render(request, 'home.html')
 
+from django.contrib.auth import logout as auth_logout
+
+from django.contrib.auth import logout
+from django.shortcuts import redirect
+from .models import UserStatus
+
 def logout(request):
-    return render(request,'home.html')
+    # Get the current user
+    user = request.user
+    
+    # Set the user's status to 'Logged Out'
+    if user.is_authenticated:
+        user_status = UserStatus.objects.get(user=user)
+        user_status.is_logged_in = False
+        user_status.save()
+        
+    # Perform the logout operation
+    logout(request)
+    
+    return redirect('home')  # Redirect to the homepage or login page after logout
+
+
+from django.http import JsonResponse
+
+from django.http import JsonResponse
+from .models import UserStatus
+
+def check_session(request):
+    if request.user.is_authenticated:
+        try:
+            user_status = UserStatus.objects.get(user=request.user)
+            if user_status.is_logged_in:
+                return JsonResponse({'logged_in': True})
+            else:
+                return JsonResponse({'logged_in': False})
+        except UserStatus.DoesNotExist:
+            return JsonResponse({'logged_in': False})
+    else:
+        return JsonResponse({'logged_in': False})
+
+
 
 @csrf_exempt
 def signup(request):
@@ -221,6 +260,8 @@ def get_disease_ingredients(disease):
         print(f"Error in get_disease_ingredients: {str(e)}")
         return None
 
+
+@csrf_exempt
 @csrf_exempt
 def chat(request):
     if request.method == 'POST':
@@ -256,7 +297,7 @@ def chat(request):
             if any(re.search(pattern, user_message) for pattern in identity_patterns):
                 return JsonResponse({"response": "I am Unani-doctor, a specialized assistant in Unani and traditional Tibb medicine."})
 
-            # Step 1: Match user message with known diseases
+            # Step 1: Match user message with known diseases dynamically
             conn = sqlite3.connect("user_details.db")
             cursor = conn.cursor()
             cursor.execute("SELECT disease, response FROM unani_responses")
@@ -264,7 +305,9 @@ def chat(request):
 
             matched_response = None
             for disease, response in rows:
-                if disease.lower() in user_message:
+                # Look for the disease name in the user message (case insensitive)
+                pattern = r'\b' + re.escape(disease.lower()) + r'\b'
+                if re.search(pattern, user_message):
                     matched_response = response
                     break
 
@@ -290,11 +333,15 @@ def chat(request):
                 extracted_disease = user_message.split()[0:5]
                 possible_disease = " ".join(extracted_disease)
 
-                # Store model response in database
+                # Store model response in database for future use
                 try:
                     cursor.execute("INSERT INTO unani_responses (disease, response) VALUES (?, ?)",
                                    (possible_disease, model_response))
                     conn.commit()
+
+                    # After inserting, fetch the latest data to update the cache
+                    cursor.execute("SELECT disease, response FROM unani_responses")
+                    rows = cursor.fetchall()  # Refresh the database cache
                 except Exception as err:
                     print("Error while caching model response:", err)
 

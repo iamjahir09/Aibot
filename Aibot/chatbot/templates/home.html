@@ -171,24 +171,28 @@
             <p>&copy; 2024 UnaniAI. All rights reserved.</p>
         </div>
     </footer>
-
     <script>
         function checkSessionStatus(event) {
             event.preventDefault();
-        
-            fetch("{% url 'check_login_status' %}", {
-                method: 'GET',
-                credentials: 'include' // Important for sending session cookie
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.is_authenticated) {
-                    window.location.href = "{% url 'index' %}";
-                } else {
-                    window.location.href = "{% url 'login' %}";
-                }
-            });
+            
+            fetch('/check-session/')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.logged_in) {
+                        window.location.href = "/index/";  // Replace with your actual chat page URL
+                    } else {
+                        window.location.href = "/login/";
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while checking session status.');
+                });
         }
+        
     </script>
+    
+
+    
 </body>
 </html>
