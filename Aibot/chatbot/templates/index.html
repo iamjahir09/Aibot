@@ -1524,13 +1524,29 @@
 
         <!-- History Window -->
         <div class="history-window glass" id="historyWindow" style="display: none;">
-            <div class="history-header">
-                <h2>Chat History</h2>
-                <button class="close-history-btn glass" onclick="toggleHistory()">
-                    <span>Close</span>
-                    <div class="btn-glow"></div>
-                </button>
-            </div>
+           <!-- Chat History Button -->
+<button class="history-btn" onclick="toggleHistory()">
+    <i class="fas fa-history btn-icon"></i>
+    <span>Chat History</span>
+    <div class="btn-glow"></div>
+</button>
+
+<!-- Chat History Modal -->
+<div id="history-modal" class="history-modal">
+    <div class="history-content">
+        <div class="history-header">
+            <h2>Chat History</h2>
+            <button class="close-history-btn glass" onclick="toggleHistory()">
+                <span>Close</span>
+                <div class="btn-glow"></div>
+            </button>
+        </div>
+        <div class="history-body">
+            <!-- History content will be dynamically inserted here -->
+        </div>
+    </div>
+</div>
+
             <div class="history-content">
                 <!-- Displaying the actual conversation history -->
                 <div class="history-messages">
@@ -1957,22 +1973,70 @@
         }
 
         // Function to toggle history window
-        function toggleHistory() {
-            const historyWindow = document.getElementById("historyWindow");
-            const chatMain = document.querySelector(".chat-main");
         
-            if (historyWindow.style.display === "none" || historyWindow.style.display === "") {
-                historyWindow.style.display = "block"; // Show history window
-                chatMain.style.display = "none"; // Hide chat window
+            // Function to toggle the chat history modal
+function toggleHistory() {
+    const modal = document.getElementById('history-modal');
+    modal.style.display = (modal.style.display === "block") ? "none" : "block"; // Toggle display
+
+    if (modal.style.display === "block") {
+        fetchChatHistory(); // Fetch chat history when modal opens
+    }
+}
+
+// Function to fetch and display the chat history
+function fetchChatHistory() {
+    fetch('/get-chat-history/')
+        .then(response => response.json())
+        .then(data => {
+            const historyBody = document.querySelector('.history-body');
+            historyBody.innerHTML = ''; // Clear previous history
+
+            if (data.diseases && data.diseases.length > 0) {
+                data.diseases.forEach(disease => {
+                    const diseaseElement = document.createElement('div');
+                    diseaseElement.classList.add('history-item');
+                    diseaseElement.innerText = disease;
+                    // Add click event to show full conversation for this disease
+                    diseaseElement.onclick = () => showConversationHistory(disease);
+                    historyBody.appendChild(diseaseElement);
+                });
             } else {
-                historyWindow.style.display = "none"; // Hide history window
-                chatMain.style.display = "flex"; // Show chat window (use flex to maintain layout)
+                historyBody.innerHTML = '<p>No history found.</p>';
             }
-        }
+        })
+        .catch(error => {
+            console.error('Error fetching chat history:', error);
+        });
+}
+
+// Function to show full conversation for a disease
+function showConversationHistory(disease) {
+    fetch(`/get-conversation-history/${disease}`)
+        .then(response => response.json())
+        .then(data => {
+            const historyBody = document.querySelector('.history-body');
+            historyBody.innerHTML = ''; // Clear previous content
+
+            if (data.conversation && data.conversation.length > 0) {
+                data.conversation.forEach(convo => {
+                    const convoElement = document.createElement('div');
+                    convoElement.classList.add('conversation-item');
+                    convoElement.innerHTML = `<strong>User:</strong> ${convo.message} <br><strong>Response:</strong> ${convo.response}`;
+                    historyBody.appendChild(convoElement);
+                });
+            } else {
+                historyBody.innerHTML = '<p>No conversation found for this disease.</p>';
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching conversation history:', error);
+        });
+}
 
         // Function to handle logout
         function logout() {
-            fetch("/logout", {
+            fetch("logout/", {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',

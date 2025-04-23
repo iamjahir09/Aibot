@@ -20,7 +20,7 @@
             <a href="#">Consult</a>
             <a href="#">Remedies</a>
             <a href="#">Contact</a>
-            <a href="{% url 'Signup' %}" class="signup-btn glass">Sign Up</a> <!-- Added Sign Up Button -->
+            <a href="{% url 'signup' %}" class="signup-btn glass">Sign Up</a> <!-- Added Sign Up Button -->
         </div>
     </nav>
 
@@ -56,7 +56,7 @@
                 <div class="search-glow"></div>
             </div>
             
-            <a href="{% url 'chat_view' %}">
+            <a href="#" onclick="checkSessionStatus(event)">
                 <button class="cta-button pulse">
                     Start Chatting
                     <div class="button-glow"></div>
@@ -171,5 +171,24 @@
             <p>&copy; 2024 UnaniAI. All rights reserved.</p>
         </div>
     </footer>
+
+    <script>
+        function checkSessionStatus(event) {
+            event.preventDefault();
+        
+            fetch("{% url 'check_login_status' %}", {
+                method: 'GET',
+                credentials: 'include' // Important for sending session cookie
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.is_authenticated) {
+                    window.location.href = "{% url 'index' %}";
+                } else {
+                    window.location.href = "{% url 'login' %}";
+                }
+            });
+        }
+    </script>
 </body>
 </html>

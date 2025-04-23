@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 import re
 from django.shortcuts import render
 import sqlite3
+from datetime import datetime
 
 # Load environment variables
 load_dotenv()
@@ -86,7 +87,7 @@ create_database()
 
 
 Unani_doctor_INSTRUCTION = """
-You are Unani-doctor, a specialized assistant in Unani medicine. Follow these strict rules EXACTLY:
+You are Unani-doctor, a specialized assistant in Unani medicine. Respond to each query within **1 minute**.
 
 1. FIRST, validate if the user query contains a real and globally recognized disease name.
    - If the disease does NOT exist or is misspelled, REPLY: "Sorry, this disease does not exist. Please recheck the name."
@@ -115,19 +116,117 @@ You are Unani-doctor, a specialized assistant in Unani medicine. Follow these st
 9. DO NOT answer anything unrelated to diseases or Unani treatment.
    - If the user asks something off-topic (e.g., politics, tech, jokes), reply: 
      "I'm your Unani health assistant. I can only help with Unani-based health queries."
-     
+
+Note: Answer should be provided **within 1 minute**.
 User:
 """
 
-def home(request):
+
+def index(request):
     return render(request, 'index.html')
+
+def home(request):
+    return render(request, 'home.html')
+
+def logout(request):
+    return render(request,'home.html')
+
+@csrf_exempt
+def signup(request):
+    if request.method == 'POST':
+        try:
+            email = request.POST.get('email')
+            password = request.POST.get('password')
+
+            if not email or not password:
+                return render(request, 'signup.html', {'error': 'Email and password are required.'})
+
+            conn = sqlite3.connect('user_details.db')
+            cursor = conn.cursor()
+
+            # Check if user already exists
+            cursor.execute("SELECT * FROM users WHERE email = ?", (email,))
+            if cursor.fetchone():
+                conn.close()
+                return render(request, 'signup.html', {'error': 'User already exists.'})
+
+            # Insert new user
+            cursor.execute("INSERT INTO users (email, password) VALUES (?, ?)", (email, password))
+            conn.commit()
+            conn.close()
+
+            return render(request, 'login.html', {'message': 'Signup successful! Please login.'})
+
+        except Exception as e:
+            return render(request, 'signup.html', {'error': f'Error: {str(e)}'})
+
+    return render(request, 'signup.html')
+
+
+from django.shortcuts import redirect
+
+@csrf_exempt
+def login(request):
+    if request.method == 'POST':
+        try:
+            email = request.POST.get('email')
+            password = request.POST.get('password')
+
+            conn = sqlite3.connect('user_details.db')
+            cursor = conn.cursor()
+
+            # Check if user exists with matching email and password
+            cursor.execute("SELECT * FROM users WHERE email = ? AND password = ?", (email, password))
+            user = cursor.fetchone()
+            conn.close()
+
+            if user:
+                request.session['user_id'] = user[0]
+                return redirect('index')  # 'index' must be the name of your URL pattern for index.html
+            else:
+                return render(request, 'login.html', {'error': 'Invalid email or password.'})
+
+        except Exception as e:
+            return render(request, 'login.html', {'error': f'Error: {str(e)}'})
+
+    return render(request, 'login.html')
+
+import sqlite3
+import re
+import json
+import requests
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+
+# Helper function to check if the disease exists in the database and return its ingredients
+def get_disease_ingredients(disease):
+    """
+    Returns the ingredients associated with a given disease if it exists in the database.
+    """
+    try:
+        conn = sqlite3.connect('user_details.db')
+        cursor = conn.cursor()
+
+        # Query to find the disease and associated ingredients
+        cursor.execute("SELECT response FROM unani_responses WHERE disease LIKE ?", ('%' + disease + '%',))
+        result = cursor.fetchone()
+
+        conn.close()
+
+        if result:
+            return result[0]  # Returning ingredients list as a string or JSON
+        else:
+            return None  # No match found
+    except Exception as e:
+        print(f"Error in get_disease_ingredients: {str(e)}")
+        return None
 
 @csrf_exempt
 def chat(request):
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
-            user_message = data.get('message', '')
+            user_message = data.get('message', '').lower().strip()
             model = data.get('model', DEFAULT_MODEL)
 
             # Greeting responses
@@ -144,31 +243,36 @@ def chat(request):
                 "assalamu alaikum": "Wa alaikum assalam! How can I assist you today?"
             }
 
-            msg = user_message.lower().strip()
-            if msg in greetings_responses:
-                return JsonResponse({"response": greetings_responses[msg]})
+            if user_message in greetings_responses:
+                return JsonResponse({"response": greetings_responses[user_message]})
 
+            # Identity questions
             identity_patterns = [
                 r"who are you",
                 r"what are you", 
                 r"what is your name", 
                 r"introduce yourself"
             ]
-            if any(re.search(pattern, msg) for pattern in identity_patterns):
+            if any(re.search(pattern, user_message) for pattern in identity_patterns):
                 return JsonResponse({"response": "I am Unani-doctor, a specialized assistant in Unani and traditional Tibb medicine."})
 
-            # Check if disease response is already cached
-            conn = sqlite3.connect('user_details.db')
+            # Step 1: Match user message with known diseases
+            conn = sqlite3.connect("user_details.db")
             cursor = conn.cursor()
+            cursor.execute("SELECT disease, response FROM unani_responses")
+            rows = cursor.fetchall()
 
-            disease_query = msg  # disease name assumption from input
-            cursor.execute("SELECT response FROM unani_responses WHERE disease = ?", (disease_query,))
-            cached = cursor.fetchone()
-            if cached:
+            matched_response = None
+            for disease, response in rows:
+                if disease.lower() in user_message:
+                    matched_response = response
+                    break
+
+            if matched_response:
                 conn.close()
-                return JsonResponse({"response": cached[0]})
+                return JsonResponse({"response": matched_response})
 
-            # Prepare prompt
+            # Step 2: No match found, call Ollama model
             enhanced_message = Unani_doctor_INSTRUCTION + user_message
             ollama_payload = {
                 "model": model,
@@ -176,20 +280,23 @@ def chat(request):
                 "stream": False
             }
 
-            # Call model
             response = requests.post(f"{OLLAMA_API_URL}/api/generate", json=ollama_payload)
+
             if response.status_code == 200:
                 result = response.json()
                 model_response = result.get("response", "No response from model")
 
-                # Store response if it contains standard format
-                if model_response and "I hope you find the cure" in model_response:
-                    try:
-                        cursor.execute("INSERT OR IGNORE INTO unani_responses (disease, response) VALUES (?, ?)",
-                                       (disease_query, model_response))
-                        conn.commit()
-                    except Exception as err:
-                        print("Caching failed:", err)
+                # Try to extract a disease name from prompt (fallback to full prompt)
+                extracted_disease = user_message.split()[0:5]
+                possible_disease = " ".join(extracted_disease)
+
+                # Store model response in database
+                try:
+                    cursor.execute("INSERT INTO unani_responses (disease, response) VALUES (?, ?)",
+                                   (possible_disease, model_response))
+                    conn.commit()
+                except Exception as err:
+                    print("Error while caching model response:", err)
 
                 conn.close()
                 return JsonResponse({"response": model_response})
@@ -198,6 +305,7 @@ def chat(request):
                 return JsonResponse({"error": f"Ollama API error: {response.status_code}"}, status=500)
 
         except Exception as e:
+            print(f"Error in chat endpoint: {str(e)}")
             return JsonResponse({"error": str(e)}, status=500)
 
     return JsonResponse({"error": "Invalid request method"}, status=405)
@@ -215,3 +323,96 @@ def get_models(request):
             return JsonResponse({"error": str(e)}, status=500)
     return JsonResponse({"error": "Invalid request method"}, status=405)
 
+
+def get_conversation_history(user_id):
+    """
+    Fetches conversation history for a specific user.
+    """
+    conn = sqlite3.connect('user_details.db')
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT message, response, timestamp
+        FROM conversations
+        WHERE user_id = ?
+        ORDER BY timestamp ASC
+    ''', (user_id,))
+    history = cursor.fetchall()
+    conn.close()
+    return history
+
+@csrf_exempt
+def chatbot_response(request):
+    """
+    Handles chatbot responses via AJAX and stores conversations.
+    """
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            user_message = data.get("message", "")
+            user_id = request.session.get("user_id")  # Get the user ID from session
+
+            if not user_id:
+                return JsonResponse({"error": "User not authenticated"}, status=401)
+
+            if not user_message:
+                return JsonResponse({"error": "No message provided"}, status=400)
+
+            # Reuse the chat logic
+            chat_request = {
+                "body": json.dumps({"message": user_message}),
+                "method": "POST"
+            }
+
+            # Mock the request object for `chat()` view
+            class DummyRequest:
+                def __init__(self, body):
+                    self.body = body
+                    self.method = "POST"
+
+            dummy_request = DummyRequest(json.dumps({"message": user_message}))
+            response_json = chat(dummy_request).content
+            response_data = json.loads(response_json)
+
+            if "response" in response_data:
+                model_response = response_data["response"]
+
+                # Save the chat to the database
+                conn = sqlite3.connect('user_details.db')
+                cursor = conn.cursor()
+                cursor.execute('''
+                    INSERT INTO conversations (user_id, message, response)
+                    VALUES (?, ?, ?)
+                ''', (user_id, user_message, model_response))
+                conn.commit()
+                conn.close()
+
+                return JsonResponse({"response": model_response})
+            else:
+                return JsonResponse({"error": response_data.get("error", "Unknown error")}, status=500)
+
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=500)
+
+    return JsonResponse({"error": "Invalid request method"}, status=405)
+
+# views.py
+from django.http import JsonResponse
+
+def check_login_status(request):
+    return JsonResponse({'is_authenticated': request.user.is_authenticated})
+
+
+def is_valid_disease(disease_name):
+    """
+    Checks if the disease exists in the Unani database.
+    """
+    conn = sqlite3.connect('user_details.db')
+    cursor = conn.cursor()
+
+    # Query to find if the disease exists
+    cursor.execute("SELECT * FROM unani_ingredients WHERE diseases LIKE ?", ('%' + disease_name + '%',))
+    disease = cursor.fetchone()
+
+    conn.close()
+    
+    return disease is not None
