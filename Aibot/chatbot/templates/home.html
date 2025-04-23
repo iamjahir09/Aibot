@@ -1,0 +1,175 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unani AI - Ancient Wisdom Meets Modern Technology</title>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="glass-nav">
+        <div class="logo">
+            <span class="neon-text">Unani</span>AI
+        </div>
+        <div class="nav-links">
+            <a href="#" class="active">Home</a>
+            <a href="#">About</a>
+            <a href="#">Consult</a>
+            <a href="#">Remedies</a>
+            <a href="#">Contact</a>
+            <a href="{% url 'Signup' %}" class="signup-btn glass">Sign Up</a> <!-- Added Sign Up Button -->
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="particle-container">
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+        </div>
+        
+        <div class="hero-content">
+            <div class="chatbot-avatar">
+                <div class="avatar-circle">
+                    <div class="avatar-inner"></div>
+                </div>
+            </div>
+            <div class="chat-bubble glass">
+                <p>Ask the Wisdom of Ancient Healing</p>
+                <div class="typing-indicator">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+            
+            <!-- Search Bar -->
+            <div class="search-container">
+                <input type="text" placeholder="Search Unani remedies..." class="search-bar glass">
+                <div class="search-glow"></div>
+            </div>
+            
+            <a href="{% url 'chat_view' %}">
+                <button class="cta-button pulse">
+                    Start Chatting
+                    <div class="button-glow"></div>
+                </button>
+            </a>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features">
+        <div class="feature-container">
+            <div class="feature-card glass">
+                <div class="feature-icon">🌿</div>
+                <h3>Natural Healing</h3>
+                <p>Discover the power of natural ingredients and ancient healing wisdom.</p>
+                <div class="card-glow"></div>
+            </div>
+
+            <div class="feature-card glass">
+                <div class="feature-icon">🔮</div>
+                <h3>Personalized Care</h3>
+                <p>AI-powered recommendations based on your unique constitution.</p>
+                <div class="card-glow"></div>
+            </div>
+
+            <div class="feature-card glass">
+                <div class="feature-icon">⚡</div>
+                <h3>Instant Insights</h3>
+                <p>Get immediate access to centuries of Unani medical knowledge.</p>
+                <div class="card-glow"></div>
+            </div>
+
+            <div class="feature-card glass">
+                <div class="feature-icon">🎯</div>
+                <h3>Mizaj Analysis</h3>
+                <p>Advanced AI assessment of your temperament and body constitution.</p>
+                <div class="card-glow"></div>
+            </div>
+
+            <div class="feature-card glass">
+                <div class="feature-icon">🌡️</div>
+                <h3>Symptom Checker</h3>
+                <p>Intelligent analysis of symptoms based on Unani principles.</p>
+                <div class="card-glow"></div>
+            </div>
+
+            <div class="feature-card glass">
+                <div class="feature-icon">📚</div>
+                <h3>Knowledge Base</h3>
+                <p>Extensive library of Unani herbs, treatments, and remedies.</p>
+                <div class="card-glow"></div>
+            </div>
+
+            <div class="feature-card glass">
+                <div class="feature-icon">🔄</div>
+                <h3>Lifestyle Integration</h3>
+                <p>Personalized recommendations for diet, exercise, and daily routines.</p>
+                <div class="card-glow"></div>
+            </div>
+
+            <div class="feature-card glass">
+                <div class="feature-icon">🤝</div>
+                <h3>Expert Connection</h3>
+                <p>Direct access to certified Unani practitioners for consultation.</p>
+                <div class="card-glow"></div>
+            </div>
+
+            <div class="feature-card glass">
+                <div class="feature-icon">📊</div>
+                <h3>Progress Tracking</h3>
+                <p>Monitor your health journey with detailed analytics and insights.</p>
+                <div class="card-glow"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="glass-footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <div class="footer-logo">
+                    <span class="neon-text">Unani</span>AI
+                </div>
+                <p>Ancient wisdom meets modern technology</p>
+            </div>
+            
+            <div class="footer-section">
+                <h4>Quick Links</h4>
+                <a href="#">Home</a>
+                <a href="#">About</a>
+                <a href="#">Consult</a>
+                <a href="#">Privacy Policy</a>
+            </div>
+            
+            <div class="footer-section">
+                <h4>Contact</h4>
+                <a href="#">Support</a>
+                <a href="#">Appointments</a>
+                <a href="#">Feedback</a>
+            </div>
+            
+            <div class="footer-section">
+                <h4>Follow Us</h4>
+                <div class="social-links">
+                    <a href="#" class="social-link">Twitter</a>
+                    <a href="#" class="social-link">LinkedIn</a>
+                    <a href="#" class="social-link">Instagram</a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2024 UnaniAI. All rights reserved.</p>
+        </div>
+    </footer>
+</body>
+</html>

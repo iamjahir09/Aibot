@@ -1,105 +1,2104 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Unani Doctor Chatbot</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f4f4f4;
-      padding: 40px;
-      max-width: 800px;
-      margin: auto;
-    }
-    h1 {
-      color: #2c3e50;
-      text-align: center;
-    }
-    textarea {
-      width: 100%;
-      height: 100px;
-      font-size: 16px;
-      padding: 10px;
-    }
-    button {
-      padding: 10px 20px;
-      font-size: 16px;
-      margin-top: 10px;
-      background-color: #3498db;
-      color: white;
-      border: none;
-      cursor: pointer;
-      border-radius: 5px;
-    }
-    button:hover {
-      background-color: #2980b9;
-    }
-    #response {
-      margin-top: 20px;
-      padding: 20px;
-      background-color: #ffffff;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      white-space: pre-wrap;
-    }
-  </style>
-  <script>
-    // Get CSRF token from cookies
-    function getCookie(name) {
-      let cookieValue = null;
-      if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-          const cookie = cookies[i].trim();
-          if (cookie.substring(0, name.length + 1) === (name + '=')) {
-            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-            break;
-          }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Unani-doctor Chat Interface</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+       <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three/examples/js/loaders/GLTFLoader.js"></script>
+    <!-- Add FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Add this CSS for the table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: rgba(15, 23, 42, 0.7);
+            border-radius: 8px;
+            overflow: hidden;
         }
-      }
-      return cookieValue;
-    }
+        
+        table, th, td {
+            border: 1px solid rgba(255, 255, 255, 0.15); /* Brightened border */
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            color: #ffffff; /* Already white color */
+            font-weight: 600; /* Increased font weight for better visibility */
+            text-shadow: 0 0 2px rgba(255, 255, 255, 0.5); /* Added text shadow for visibility */
+        }
+        
+        th {
+            background: rgba(102, 217, 232, 0.2); /* Increased visibility */
+            color: #66d9e8;
+            font-weight: 700; /* Extra bold headers */
+            text-shadow: 0 0 3px rgba(102, 217, 232, 0.5); /* Stronger glow for headers */
+        }
+        
+        tr:hover {
+            background: rgba(102, 217, 232, 0.1);
+        }
 
-    const csrftoken = getCookie('csrftoken');
-  </script>
+        /* Fix for tables in message content */
+        .message-content table {
+            background: #0f1117 !important; /* Dark background like ChatGPT */
+            border: 1px solid #343541 !important; /* Subtle border like ChatGPT */
+            margin: 15px 0;
+            border-radius: 4px;
+            border-collapse: separate;
+            border-spacing: 0;
+            width: 100%;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        .message-content table th {
+            background: #0f1117 !important; /* Same as data cells */
+            color: #ffffff !important; /* Bright white text */
+            border: 1px solid #343541 !important; /* Same border */
+            padding: 10px 12px;
+            font-weight: 700; /* Only keep bold to subtly distinguish headers */
+            text-align: left;
+        }
+
+        /* Add an extra rule to ensure header text is white */
+        .message-content table th, .message-content table thead th {
+            color: #ffffff !important; /* Force white color with highest specificity */
+        }
+
+        .message-content table td {
+            background: #0f1117 !important; /* Dark cell background like ChatGPT */
+            color: #ffffff !important; /* White text for cells */
+            border: 1px solid #343541 !important;
+            padding: 10px 12px;
+        }
+
+        .message-content table tr:hover td {
+            background:rgb(57, 59, 82) !important; /* Slightly lighter on hover */
+        }
+
+        .message-content table tr:hover th {
+            background: #1d1e2e !important; /* Same hover effect for headers */
+        }
+
+        /* Add this CSS for the sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: -350px; /* Start further off-screen */
+            width: 300px;
+            height: 100%;
+            background: rgba(2, 4, 8, 0.95); /* Even darker for better contrast */
+            backdrop-filter: blur(10px);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Smooth bounce effect */
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid rgba(102, 217, 232, 0.2);
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.6);
+            transform: translateX(0);
+        }
+
+        .sidebar.open {
+            left: 0;
+            transform: translateX(0);
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 0px solid rgba(102, 217, 232, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .sidebar-header h2 {
+            margin: 0;
+            color: #66d9e8;
+            font-weight: 700;
+            text-shadow: 0 0 5px rgba(102, 217, 232, 0.5);
+            font-size: 28px;
+            letter-spacing: 1px;
+        }
+
+        .sidebar-content {
+            padding: 25px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .sidebar-footer {
+            padding: 20px;
+            border-top: 1px solid rgba(102, 217, 232, 0.2);
+            text-align: center;
+        }
+
+        /* Improved button styling */
+        .sidebar-btn {
+            width: 100%;
+            padding: 14px;
+            border-radius: 8px;
+            border: 1px solid rgba(0, 0, 0, 0.3);
+            background: rgba(18, 84, 240, 0.8);
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            font-family: 'Space Grotesk', sans-serif;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Apply the improved button class to all sidebar buttons */
+        .history-btn, .emergency-btn, .reminder-btn, .logout-btn, .close-sidebar-btn {
+            width: 100%;
+            padding: 14px;
+            border-radius: 8px;
+            border: 1px solid rgba(6, 14, 230, 0.3);
+            background: rgba(0, 0, 0, 0.8);
+            color: #ffffff;
+            font-size: 16px;
+            cursor: pointer;
+            font-family: 'Space Grotesk', sans-serif;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+
+        .history-btn:hover, .emergency-btn:hover, .reminder-btn:hover, .logout-btn:hover, .close-sidebar-btn:hover {
+            background: rgba(6, 17, 19, 0.2);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            border-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .history-btn span, .emergency-btn span, .reminder-btn span, .logout-btn span, .close-sidebar-btn span {
+            color:rgb(198, 47, 47);
+            font-weight: 600;
+            font-size: 16px;
+            z-index: 1;
+            position: relative;
+            letter-spacing: 0.5px;
+        }
+
+        /* Add icons to buttons */
+        .history-btn i, .emergency-btn i, .reminder-btn i, .logout-btn i, .close-sidebar-btn i {
+            margin-right: 10px;
+            font-size: 18px;
+        }
+
+        /* Glow effect for buttons */
+        .btn-glow {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, rgba(102, 217, 232, 0.2), rgba(166, 139, 250, 0.2));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            border-radius: 8px;
+        }
+
+        
+
+        /* Menu button positioning fix */
+        .menu-btn {
+            position: fixed !important;
+            top: 20px !important;
+            left: 20px !important;
+            z-index: 1001 !important;
+            background: rgba(3, 13, 37, 0.8) !important;
+            border: 1px solid rgba(0, 0, 0, 0.3) !important;
+            border-radius: 8px !important;
+            cursor: pointer !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            width: 44px !important;
+            height: 44px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            transition: all 0.3s ease !important;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+        }
+
+        /* Ensure the icon is centered */
+        .menu-btn i {
+            display: block !important;
+            text-align: center !important;
+            line-height: 1 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        .menu-btn:hover {
+            background: rgba(0, 0, 0, 0.2);
+            transform: translateY(-2px);
+            box-shadow: 0 0 10px rgba(5, 42, 46, 0.5);
+        }
+
+        .menu-btn.hide {
+            display: none; /* Hide menu button when sidebar is open */
+        }
+
+        /* Hamburger Icon */
+        .hamburger-icon {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .hamburger-icon span {
+            width: 25px;
+            height: 2px;
+            background: #000000
+            border-radius: 2px;
+            box-shadow: 0 0 3px rgba(102, 217, 232, 0.3);
+            {% comment %} transition: all 0.3s ease; {% endcomment %}
+        }
+
+        .menu-btn:hover .hamburger-icon span {
+            box-shadow: 0 0 8px rgba(160, 171, 173, 0.8);
+        }
+
+        /* Blank window styles */
+        #blank-window {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 1002;
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #blank-window-content {
+            background: Transparent;
+            padding: 20px;
+            border-radius: 10px;
+            width: 80%;
+            max-width: 800px;
+            text-align: center;
+        }
+
+        .body-part-images {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+        }
+
+        .body-part-images img {
+            width: 150px;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .body-part-images figure {
+            text-align: center;
+            margin: 0;
+        }
+
+        .body-part-images img:hover {
+            transform: scale(1.1);
+        }
+
+        .body-part-images figcaption {
+            margin-top: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            color: #ffffff;
+            text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+        }
+
+        .close-blank-window-btn {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #66d9e8 0%, #6096fd 50%, #a78bfa 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Space Grotesk', sans-serif;
+            box-shadow: 0 0 6px rgba(102, 217, 232, 0.3), 0 0 12px rgba(102, 217, 232, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .close-blank-window-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 10px rgba(102, 217, 232, 0.5);
+        }
+
+        /* Add this CSS for the dropdown */
+        .disease-dropdown {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(15, 23, 42, 0.7);
+            font-size: 16px;
+            color: #ffffff;
+            cursor: pointer;
+            font-family: 'Space Grotesk', sans-serif;
+            box-shadow: 0 0 6px rgba(102, 217, 232, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .disease-dropdown:focus {
+            outline: none;
+            border-color: #66d9e8;
+            box-shadow: 0 0 10px rgba(102, 217, 232, 0.5);
+        }
+
+        .disease-dropdown option {
+            padding: 12px;
+            background: rgba(15, 23, 42, 0.9);
+            color: #ffffff;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7); /* Darker overlay for better focus */
+            justify-content: center;
+            align-items: center;
+            z-index: 1003; /* Ensure it's above other elements */
+        }
+
+        .modal-content {
+            background: rgba(15, 23, 42, 0.9); /* Dark background with transparency */
+            padding: 25px;
+            border-radius: 16px; /* More rounded corners to match site style */
+            width: 90%; /* Responsive width */
+            max-width: 500px; /* Max width for larger screens */
+            box-shadow: 0 0 6px rgba(102, 217, 232, 0.3), 0 0 12px rgba(102, 217, 232, 0.2);
+            animation: fadeIn 0.3s ease; /* Smooth fade-in animation */
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: #ffffff; /* Brightened from #d1d5db to white */
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding-bottom: 10px;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            font-size: 24px; /* Larger font size for heading */
+            color: #ffffff; /* Brightened from #d1d5db to white */
+            font-weight: 600; /* Added weight for better visibility */
+        }
+
+        .modal-header button {
+            background: none;
+            border: none;
+            font-size: 28px; /* Larger close button */
+            cursor: pointer;
+            color: #a1a1aa; /* Match secondary text color */
+            transition: color 0.2s ease; /* Smooth color transition */
+        }
+
+        .modal-header button:hover {
+            color: #d1d5db; /* Match text color on hover */
+        }
+
+        .modal-body {
+            margin-bottom: 20px;
+            font-size: 16px; /* Comfortable font size */
+            color: #e2e8f0; /* Brightened from #a1a1aa */
+            font-weight: 500; /* Added weight for better visibility */
+        }
+        
+        .modal-body input {
+            background: rgba(15, 23, 42, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            padding: 8px 12px;
+            color: #ffffff; /* Brightened from #d1d5db to white */
+            font-family: 'Space Grotesk', sans-serif;
+            width: 100%;
+            margin-top: 5px;
+        }
+        
+        .modal-body input:focus {
+            outline: none;
+            box-shadow: 0 0 6px rgba(102, 217, 232, 0.3);
+            border-color: #66d9e8;
+        }
+        
+        .modal-body label {
+            color: #ffffff; /* Brightened from #d1d5db to white */
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500; /* Added weight for better visibility */
+        }
+
+        .modal-footer {
+            text-align: right;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            padding-top: 15px;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Space Grotesk', sans-serif;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #66d9e8 0%, #6096fd 50%, #a78bfa 100%);
+            color: #ffffff;
+            font-weight: 600;
+            box-shadow: 0 0 6px rgba(102, 217, 232, 0.3);
+        }
+        
+        .btn-secondary {
+            background: rgba(15, 23, 42, 0.7);
+            color: #ffffff;
+            font-weight: 600;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #66d9e8 0%, #4db8e6 100%);
+            color: #ffffff;
+            font-weight: 600;
+            box-shadow: 0 0 6px rgba(102, 217, 232, 0.3);
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 10px rgba(114, 122, 123, 0.5);
+        }
+
+        /* Fade-in animation for modal */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Buttons styling improvement for better visibility */
+        .history-btn span, .emergency-btn span, .reminder-btn span, .logout-btn span, .close-sidebar-btn span {
+            color: #ffffff;
+            font-weight: 700;
+            text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+            font-size: 18px;
+        }
+        
+        .sidebar-header h2 {
+            color: #ffffff;
+            font-weight: 700;
+            text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+            font-size: 22px;
+        }
+
+        /* Button glow improvements */
+        .btn-glow {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            background: radial-gradient(circle at center, rgba(255, 255, 255, 0.25) 0%, transparent 70%);
+            opacity: 0.5; /* Always show some glow */
+            transition: opacity 0.3s ease;
+        }
+        
+        .history-btn:hover .btn-glow, 
+        .emergency-btn:hover .btn-glow, 
+        .reminder-btn:hover .btn-glow, 
+        .logout-btn:hover .btn-glow, 
+        .close-sidebar-btn:hover .btn-glow {
+            opacity: 1;
+        }
+        
+        /* Button hover state improvements */
+        .history-btn:hover span, 
+        .emergency-btn:hover span, 
+        .reminder-btn:hover span, 
+        .logout-btn:hover span, 
+        .close-sidebar-btn:hover span {
+            transform: scale(1.05);
+            text-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+            transition: all 0.3s ease;
+        }
+
+        /* Main container width improvements */
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+            max-width: 100%;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        /* Chat main layout - exactly like ChatGPT */
+        .chat-main {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            width: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            overflow: hidden;
+        }
+
+        /* Chat header fixed at top */
+        .chat-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            background: rgba(3, 7, 18, 0.95);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Chat messages take remaining space with scrolling */
+        .chat-messages {
+            position: fixed;
+            top: 60px; /* Header height */
+            bottom: 80px; /* Input height */
+            left: 0;
+            right: 0;
+            overflow-y: auto;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            background: rgba(3, 7, 18, 0.95);
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 20px; /* Add padding at bottom for better spacing */
+        }
+
+        /* Chat input fixed at bottom */
+        .chat-input-container {
+            padding: 15px;
+            position: fixed;
+            width: 100%;
+            box-sizing: border-box;
+            background: rgba(3, 7, 18, 0.95);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 100;
+            bottom: 0;
+            left: 0;
+            right: 0;
+        }
+
+        /* Message grouping for alternating backgrounds */
+        .message-group {
+            width: 100%;
+            padding: 1rem 0;
+        }
+
+        .message-group.ai {
+            background: var(--background-dark);
+        }
+
+        .message-group.user {
+            background: transparent; /* Remove any background */
+        }
+
+        /* Message styling for ChatGPT-like appearance */
+        .message {
+            display: flex;
+            gap: 1rem;
+            max-width: 900px; /* Increased from 800px for wider cards */
+            width: 92%; /* Use percentage for responsive width */
+            margin: 0 auto;
+            padding: 0.75rem 1rem;
+            box-sizing: border-box;
+        }
+
+        /* Message content styling improvement */
+        .message-content {
+            border-radius: 0.5rem;
+            padding: 1rem 1.25rem; /* Increased padding for more space */
+            width: 100%;
+            font-size: 1rem;
+            line-height: 1.6;
+            overflow-wrap: break-word;
+            word-break: break-word; /* Allow words to break when needed */
+            color: var(--text-primary);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+            background: rgba(15, 23, 42, 0.7); /* Slightly more opaque for better readability */
+            overflow-x: auto; /* Allow horizontal scrolling for wide content */
+            max-width: 100%; /* Prevent content from overflowing container */
+            box-sizing: border-box;
+        }
+
+        /* Table container styling */
+        .table-container {
+            overflow-x: auto;
+            width: 100%;
+            margin: 15px 0;
+            position: relative;
+            border-radius: 4px;
+        }
+        
+        /* New responsive table container */
+        .table-responsive {
+            display: block;
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        
+        /* Mobile-friendly table */
+        .mobile-friendly-table {
+            width: 100%;
+            margin-bottom: 0;
+            color: #ffffff;
+            border-collapse: collapse;
+            border-spacing: 0;
+        }
+        
+        /* Force table to not be like tables anymore on mobile */
+        @media (max-width: 767px) {
+            .message-content .message-text {
+                width: 100% !important;
+                max-width: 100% !important;
+                overflow-x: hidden !important;
+            }
+            
+            .table-responsive {
+                border: 0;
+                width: 100% !important;
+                max-width: 100% !important;
+                overflow-x: auto !important;
+                -webkit-overflow-scrolling: touch !important;
+                display: block !important;
+            }
+            
+            /* Force table to fit screen */
+            .mobile-friendly-table {
+                width: 100% !important;
+                table-layout: auto !important;
+                display: table !important;
+            }
+            
+            /* Make sure chat content doesn't overflow screen */
+            .message-content {
+                max-width: 100% !important;
+                width: 100% !important;
+                overflow-wrap: break-word !important;
+                word-break: break-word !important;
+                overflow-x: hidden !important;
+            }
+        }
+
+        /* Fix for user messages that have tables */
+        .user-message .message-content .table-responsive {
+            background: transparent !important;
+        }
+        
+        .user-message .message-content .mobile-friendly-table th,
+        .user-message .message-content .mobile-friendly-table td {
+            background: rgba(16, 23, 34, 0.9) !important;
+        }
+
+        /* Improved table styling */
+        .message-content table {
+            width: 100%;
+            margin: 15px 0;
+            border-collapse: collapse;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+            table-layout: auto;
+        }
+
+        .message-content .message-text {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        /* Loading indicator */
+        .loading-indicator {
+            display: none;
+            position: absolute;
+            bottom: 15px;
+            right: 60px;
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(102, 217, 232, 0.3);
+            border-radius: 50%;
+            border-top-color: #66d9e8;
+            animation: spinner 1s linear infinite;
+            z-index: 10;
+        }
+
+        @keyframes spinner {
+            to {transform: rotate(360deg);}
+        }
+
+        .loading-indicator.active {
+            display: block;
+        }
+
+        /* Specific styling for user messages */
+        .user-message .message-content {
+            background: rgba(22, 31, 46, 0.85); /* Darker blue-gray background that's easier on the eyes */
+            border: 1px solid rgba(66, 82, 110, 0.15); /* Subtle border */
+            color: #e2e8f0; /* Slightly softer text color */
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Update user message content styling */
+        .user-message .message-content p {
+            color: #e2e8f0; /* Ensure user message text is clearly visible */
+        }
+
+        /* Avatar styling improvements */
+        .message-avatar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(15, 23, 42, 0.7);
+            font-size: 14px;
+            font-weight: 600;
+            flex-shrink: 0;
+            margin-top: 0.15rem; /* Align with message content */
+            color: #e2e8f0; /* Ensure avatar text is visible */
+        }
+
+        .user-message .message-avatar {
+            background: rgba(14, 24, 36, 0.9); /* Darker for user avatar */
+            color: #66d9e8; /* Cyan text for user avatar to match theme */
+            border: 1px solid rgba(102, 217, 232, 0.2); /* Subtle cyan border */
+        }
+
+        /* Improve message group styling */
+        .message-group.user {
+            background: transparent; /* Remove any background */
+        }
+
+        /* Add a subtle gradient hover effect to user messages */
+        .user-message .message-content:hover {
+            background: rgba(25, 35, 52, 0.85); /* Slightly lighter on hover */
+        }
+
+        /* Improve message headers */
+        .message-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.75rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding-bottom: 0.5rem;
+        }
+
+        .message-header .sender {
+            font-weight: 600;
+            color:rgb(132, 181, 186);
+        }
+
+        .user-message .message-header .sender {
+            color: #66d9e8; /* Blue tint for user name */
+        }
+
+        /* Add subtle highlight to table content for better visibility */
+        .message-content table {
+            margin: 20px 0 !important; /* More vertical spacing around tables */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15) !important; /* Stronger shadow for tables */
+        }
+
+        /* Chat input container more professional */
+        .chat-input-container {
+            padding: 15px;
+            position: fixed;
+            width: 100%;
+            box-sizing: border-box;
+            background: rgba(3, 7, 18, 0.95);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 100;
+            bottom: 0;
+            left: 0;
+            right: 0;
+        }
+
+        .chat-form {
+            position: relative;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .chat-input {
+            width: 100%;
+            padding: 12px 50px 12px 15px;
+            border-radius: 20px;
+            border: 1px solid rgba(97, 205, 219, 0.3);
+            background: rgba(71, 123, 119, 0.7);
+            color: #fff;
+            font-size: 16px;
+            resize: none;
+            box-sizing: border-box;
+            min-height: 48px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .send-button {
+            position: absolute;
+            right: 6px;
+            bottom: 6px;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            background: linear-gradient(135deg, #66d9e8 0%, #6096fd 50%, #a78bfa 100%);
+            border: none;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .send-button span {
+            display: none;
+        }
+
+        .send-icon {
+            fill: white;
+            width: 20px;
+            height: 20px;
+        }
+
+        /* For larger screens */
+        @media (min-width: 1200px) {
+            .message {
+                max-width: 950px; /* Even wider on large screens */
+                width: 80%;
+            }
+            
+            .chat-form {
+                max-width: 950px; /* Match message width */
+            }
+        }
+        
+        /* Mobile optimizations - consolidated for clarity */
+        @media (max-width: 768px) {
+            /* Hide avatars on small screens to save space */
+            .message-avatar {
+                display: none !important;
+            }
+            
+            /* Message container adjustment for mobile */
+            .message {
+                display: block !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                padding: 5px 10px !important;
+                margin: 0 !important;
+                box-sizing: border-box !important;
+            }
+            
+            /* Give full width to message content */
+            .message-content {
+                width: 100% !important;
+                max-width: 100% !important;
+                padding: 10px !important;
+                margin: 0 !important;
+                box-sizing: border-box !important;
+                overflow-x: hidden !important;
+            }
+            
+            /* Make text smaller on small screens */
+            .message-text {
+                font-size: 14px !important;
+            }
+            
+            /* Special adjustments for AI and user messages */
+            .ai-message .message-content,
+            .user-message .message-content {
+                border-radius: 8px !important;
+            }
+            
+            /* Message group spacing */
+            .message-group {
+                padding: 4px 0 !important;
+                margin: 4px 0 !important;
+            }
+            
+            /* Adjust chat container padding */
+            .chat-messages {
+                padding: 0 0 20px 0 !important;
+                /* Don't set a fixed height as we're using position:fixed with top/bottom values */
+            }
+            
+            /* Adjust input container for mobile */
+            .chat-input-container {
+                padding: 8px !important;
+                height: auto !important; /* Let it size based on content */
+                min-height: 60px !important;
+                max-height: 120px !important; /* Prevent it from taking too much space */
+            }
+            
+            /* Force tables to be fully responsive */
+            .message-content table {
+                width: 100% !important;
+                font-size: 14px !important;
+                margin: 10px 0 !important;
+            }
+        }
+        
+        /* Extra small devices */
+        @media (max-width: 480px) {
+            /* Chat input area optimization */
+            .chat-input-container {
+                padding: 8px;
+            }
+            
+            .chat-input {
+                padding: 8px 40px 8px 10px;
+                font-size: 14px;
+                min-height: 40px;
+                border-radius: 18px;
+            }
+            
+            .send-button {
+                width: 32px;
+                height: 32px;
+                right: 4px;
+                bottom: 4px;
+            }
+            
+            .send-icon {
+                width: 16px;
+                height: 16px;
+            }
+            
+            /* Make table text smaller on very small screens */
+            .message-content table {
+                font-size: 12px !important;
+                display: block !important;
+                overflow-x: auto !important;
+                white-space: nowrap !important;
+                -webkit-overflow-scrolling: touch !important;
+            }
+            
+            /* Reduce cell padding further */
+            .message-content table th,
+            .message-content table td {
+                padding: 5px 4px !important;
+            }
+            
+            /* Smaller headers */
+            h3, h4 {
+                font-size: 16px !important;
+                margin-top: 5px !important;
+                margin-bottom: 6px !important;
+            }
+            
+            /* Adjust menu button position for very small screens */
+            .menu-btn {
+                top: 10px !important;
+                left: 10px !important;
+                width: 36px !important;
+                height: 36px !important;
+            }
+            
+            /* Footer text */
+            .input-footer p {
+                font-size: 11px;
+                margin-top: 4px;
+                
+            }
+        }
+
+        /* Completely reset all table styling first */
+        .message-content table, 
+        .message-content table tr, 
+        .message-content table th, 
+        .message-content table td {
+            margin: 0;
+            padding: 0;
+            background: #0f1117;
+            color: #ffffff;
+            border: 1px solid #343541;
+            font-weight: normal;
+        }
+
+        /* Then apply identical styles to both th and td */
+        .message-content table td,
+        .message-content table th {
+            padding: 10px 12px;
+            background: #0f1117 !important;
+            color: #ffffff !important;
+            border: 1px solid #343541 !important;
+            font-weight: normal !important;
+            text-align: left;
+        }
+
+        /* Add !important to th specifically and with highest specificity */
+        .message-content table thead th,
+        .message-content table th,
+        .message-content table tr th,
+        .message-content > thead > tr > th,
+        .message-content *:not(td) > th {
+            color: #ffffff !important;
+            background-color: #0f1117 !important;
+            font-weight: normal !important;
+        }
+
+        /* Remove any existing hover styles and apply them equally */
+        .message-content table tr:hover td,
+        .message-content table tr:hover th {
+            background: #1d1e2e !important;
+        }
+
+        /* Additional direct styling for any elements inside th to handle edge cases */
+        .message-content table th *,
+        .message-content table thead th * {
+            color: #ffffff !important;
+        }
+
+        /* Define the root variables first for better organization */
+        :root {
+            --background-dark: rgba(3, 7, 18, 0.95);
+            --text-primary: #ffffff;
+            --glass-bg: rgba(15, 23, 42, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.05);
+            --primary-gradient: linear-gradient(135deg, #66d9e8 0%, #6096fd 50%, #a78bfa 100%);
+        }
+
+        /* Specific and direct styling for user messages - with !important flags */
+        .user-message .message-content {
+            background-color: rgba(16, 23, 34, 0.9) !important; /* Very dark blue-gray */
+            background: rgba(16, 23, 34, 0.9) !important;
+            border: 1px solid rgba(66, 82, 110, 0.15) !important;
+            color: #e2e8f0 !important; /* Light gray text */
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2) !important;
+        }
+
+        /* Message group styling with additional specificity */
+        div.message-group.user {
+            background: transparent !important;
+        }
+
+        /* Force text color in user messages */
+        .user-message .message-content p,
+        .user-message .message-content span,
+        .user-message .message-content div {
+            color: #e2e8f0 !important;
+        }
+
+        /* Specific styling for user avatar */
+        .user-message .message-avatar {
+            background: rgba(14, 24, 36, 0.9) !important;
+            color:rgb(139, 228, 234) !important;
+            border: 1px solid rgba(102, 217, 232, 0.2) !important;
+        }
+
+        /* Sidebar overlay backdrop */
+        .sidebar-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(3px);
+            z-index: 999;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .sidebar-backdrop.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Chat header adjustment to ensure proper layout */
+        .chat-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            padding: 15px 20px;
+            min-height: 60px;
+            width: 100%;
+            z-index: 10;
+            flex-shrink: 0;
+        }
+
+        .model-selector {
+            position: relative;
+            margin-left: 0; /* Remove any left margin */
+        }
+
+        /* Send button specific fixes at global level */
+        .send-button {
+            cursor: pointer;
+            background: linear-gradient(135deg, #66d9e8 0%,rgb(4, 8, 15) 50%, #a78bfa 100%);
+            border: none;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: absolute;
+            right: 7px;
+            bottom: 6px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            transition: all 0.2s ease;
+        }
+
+        .send-button:hover,
+        .send-button:focus {
+            transform: scale(1.05);
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
+        }
+
+        .send-icon {
+            fill: white;
+        }
+
+        /* Chat form layout improvement */
+        .chat-form {
+            position: relative;
+            display: flex;
+            align-items: center;
+            width: 100%;
+        }
+
+        .chat-input {
+            box-sizing: border-box;
+            width: 100%;
+            resize: none;
+        }
+
+        /* Mobile specific fixes for send button */
+        @media (max-width: 768px) {
+            /* Send button fixes */
+            .send-button {
+                width: 40px !important;
+                height: 40px !important;
+                right: 10px !important;
+                bottom: 10px !important;
+                z-index: 100 !important;
+                padding: 0 !important;
+            }
+            
+            .send-button span {
+                display: none !important; /* Hide text on small devices */
+            }
+            
+            .send-icon {
+                width: 20px !important;
+                height: 20px !important;
+            }
+            
+            /* Chat input fixes */
+            .chat-input {
+                padding-right: 50px !important; /* Make space for the button */
+                min-height: 46px !important;
+            }
+        }
+
+        /* Very small devices */
+        @media (max-width: 480px) {
+            .send-button {
+                width: 36px !important;
+                height: 36px !important;
+                right: 8px !important;
+                bottom: 8px !important;
+            }
+            
+            .send-icon {
+                width: 18px !important;
+                height: 18px !important;
+            }
+        }
+
+        /* Force mobile overflow scrolling */
+        @media (max-width: 768px) {
+            .message-content {
+                overflow-x: auto !important;
+                -webkit-overflow-scrolling: touch !important;
+            }
+            
+            .table-container {
+                overflow-x: auto !important;
+                -webkit-overflow-scrolling: touch !important;
+                max-width: 100% !important;
+                display: block !important;
+                width: 100% !important;
+            }
+            
+            .chat-messages {
+                -webkit-overflow-scrolling: touch !important;
+            }
+            
+            .message-text {
+                width: 100% !important;
+                max-width: 100% !important;
+                overflow-x: auto !important;
+                -webkit-overflow-scrolling: touch !important;
+            }
+            
+            /* Ensure tables don't overflow */
+            .message-content table {
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+        }
+
+        /* Additional fixes for Markdown rendering */
+        .message-text h1, .message-text h2, .message-text h3, 
+        .message-text h4, .message-text h5, .message-text h6 {
+            color: #ffffff;
+            margin-top: 15px;
+            margin-bottom: 10px;
+        }
+        
+        .message-text p {
+            margin-bottom: 10px;
+        }
+        
+        .message-text ul, .message-text ol {
+            padding-left: 20px;
+            margin-bottom: 10px;
+        }
+        
+        .message-text pre, .message-text code {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: monospace;
+            overflow-x: auto;
+        }
+
+        /* Additional table styling for mobile */
+        @media (max-width: 480px) {
+            /* Transform tables for mobile if they're too wide */
+            .message-content .table-responsive {
+                overflow-x: auto !important;
+                -webkit-overflow-scrolling: touch !important;
+            }
+            
+            /* Alternative view for tables on very small screens */
+            .message-content .mobile-friendly-table {
+                font-size: 12px !important;
+            }
+            
+            .message-content .mobile-friendly-table th,
+            .message-content .mobile-friendly-table td {
+                padding: 8px 6px !important;
+                font-size: 12px !important;
+            }
+        }
+
+        /* Specific fix for table content */
+        .message-text p {
+            white-space: normal !important;
+            word-break: break-word !important;
+        }
+        
+        /* Extra fix for chat container */
+        .chat-container {
+            max-width: 100vw !important;
+            overflow-x: hidden !important;
+        }
+        
+        /* Background styling for more professional look */
+        body {
+            background:rgb(59, 78, 130);
+            background-image: linear-gradient(to bottom right, rgba(15, 23, 42, 0.8), rgba(3, 7, 18, 1));
+            background-attachment: fixed;
+            padding: 0;
+            margin: 0;
+            font-family: 'Space Grotesk', sans-serif;
+            color: #ffffff;
+            line-height: 1.6;
+            height: 100vh;
+            overflow: hidden;
+            max-width: 100vw;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+
+        /* Mobile send button adjustments */
+        @media (max-width: 768px) {
+            /* Input field styling */
+            .chat-input {
+                padding: 10px 45px 10px 12px !important;
+                font-size: 15px !important;
+                min-height: 40px !important;
+                border-radius: 18px !important;
+            }
+            
+            /* Send button positioning */
+            .send-button {
+                width: 36px !important;
+                height: 36px !important;
+                right: 10px !important;
+                bottom: 10px !important;
+                padding: 0 !important;
+            }
+            
+            .send-icon {
+                width: 18px !important;
+                height: 18px !important;
+            }
+        }
+
+        /* Extra small devices */
+        @media (max-width: 480px) {
+            .chat-input {
+                padding: 8px 40px 8px 10px !important;
+                font-size: 14px !important;
+            }
+            
+            .send-button {
+                width: 32px !important;
+                height: 32px !important;
+                right: 8px !important;
+                bottom: 8px !important;
+            }
+            
+            .send-icon {
+                width: 16px !important;
+                height: 16px !important;
+            }
+        }
+    </style>
 </head>
 <body>
-  <h1>🧕🏻 Unani Doctor Chatbot</h1>
+    <div class="chat-container">
+        <div id="model-container" onclick="openBlankWindow()"></div> <!-- Add click event here -->
 
-  <textarea id="userInput" placeholder="Type your symptoms or question..."></textarea>
-  <br>
-  <button onclick="sendMessage()">Ask the Doctor</button>
 
-  <div id="response">🧠 Response will appear here...</div>
+        <main class="chat-main">
+            <div class="chat-header glass" style="border-bottom: none; box-shadow: none; backdrop-filter: none;">
+                <!-- Menu Button -->
+                <button class="menu-btn" onclick="toggleSidebar()">
+                    <i class="fas fa-bars" style="color: #66d9e8; font-size: 18px; line-height: 1;"></i>
+                    <div class="btn-glow"></div>
+                </button>
+                <div class="model-selector">
+                    <span class="model-name">Unani Assistant</span>
+                </div>
+            </div>
 
-  <script>
-    function sendMessage() {
-      const userInput = document.getElementById("userInput").value;
-      const responseDiv = document.getElementById("response");
+            <div class="chat-messages">
+                <!-- AI Message in AI group -->
+                <div class="message-group ai">
+                    <div class="message ai-message">
+                        <div class="message-avatar">
+                <div class="avatar-circle">
+                    <div class="avatar-inner"></div>
+                </div>
+            </div>
+                        <div class="message-content glass">
+                            <div class="message-header">
+                                <span class="sender">UnaniAI</span>
+                </div>
+                            <p>Welcome to UnaniAI! I'm your personal Tib medicine assistant. How can I help you today with natural healing solutions?</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- Removed user and AI message cards about anxiety -->
+            </div>
+            
+            <!-- Chat Input Section -->
+            <div class="chat-input-container glass">
+                <form class="chat-form" action="/api/chat" method="POST">
+                    <textarea class="chat-input" placeholder="Ask UnaniAI..." rows="1"></textarea>
+                    <div class="loading-indicator"></div>
+                    <button type="submit" class="send-button">
+                        <svg class="send-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="24" height="24">
+                            <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path>
+                        </svg>
+                        <span>Send</span>
+                    </button>
+                </form>
+                    <div class="input-footer" style="border-top: none; box-shadow: none; background: none; padding: 10px 0;">
+                    <p style="text-align: center; color: #666; font-size: 14px; margin: 0;">
+                        UnaniAI can make mistakes. Consider checking important information.
+                    </p>
+                </div>
+                
+                
+            </div>
+        </main>
 
-      if (!userInput.trim()) {
-        responseDiv.innerText = "⚠️ Please enter a question.";
-        return;
-      }
+        <!-- Add a backdrop for the sidebar -->
+        <div class="sidebar-backdrop" id="sidebar-backdrop" onclick="toggleSidebar()"></div>
 
-      responseDiv.innerText = "⏳ Thinking...";
+        <!-- Sidebar -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h2>UnaniAI Menu</h2>
+            </div>
+            <div class="sidebar-content">
+                <button class="history-btn" onclick="toggleHistory()">
+                    <i class="fas fa-history btn-icon"></i>
+                    <span>Chat History</span>
+                    <div class="btn-glow"></div>
+                </button>
+                <button class="emergency-btn" onclick="handleEmergency()">
+                    <i class="fas fa-ambulance btn-icon"></i>
+                    <span>Emergency</span>
+                    <div class="btn-glow"></div>
+                </button>
+                <button class="reminder-btn" onclick="openReminderModal()">
+                    <i class="fas fa-bell btn-icon"></i>
+                    <span>Medicine Reminder</span>
+                    <div class="btn-glow"></div>
+                </button>
+                <button class="logout-btn" onclick="logout()">
+                    <i class="fas fa-sign-out-alt btn-icon"></i>
+                    <span>Logout</span>
+                    <div class="btn-glow"></div>
+                </button>
+        </div>
+            <div class="sidebar-footer">
+                <button class="close-sidebar-btn" onclick="toggleSidebar()">
+                    <i class="fas fa-times btn-icon"></i>
+                    <span>Close Menu</span>
+                    <div class="btn-glow"></div>
+                </button>
+            </div>
+        </div>
 
-      fetch("/chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRFToken": csrftoken
-        },
-        body: JSON.stringify({ message: userInput })
-      })
-      .then(res => res.json())
-      .then(data => {
-        responseDiv.innerText = "🧠 " + data.response;
-      })
-      .catch(err => {
-        responseDiv.innerText = "❌ Error: " + err.message;
-      });
-    }
-  </script>
+        <!-- History Window -->
+        <div class="history-window glass" id="historyWindow" style="display: none;">
+            <div class="history-header">
+                <h2>Chat History</h2>
+                <button class="close-history-btn glass" onclick="toggleHistory()">
+                    <span>Close</span>
+                    <div class="btn-glow"></div>
+                </button>
+            </div>
+            <div class="history-content">
+                <!-- Displaying the actual conversation history -->
+                <div class="history-messages">
+                    {% for message, response, timestamp in history %}
+                        <!-- User message group -->
+                        <div class="message-group user">
+                            <div class="message user-message">
+                                <div class="message-avatar">You</div>
+                                <div class="message-content glass">
+                                    <div class="message-header">
+                                        <span class="sender">You</span>
+            </div>
+                                    <p>{{ message }}</p>
+            </div>
+            </div>
+            </div>
+                        
+                        <!-- AI message group -->
+                        <div class="message-group ai">
+                            <div class="message ai-message">
+                                <div class="message-avatar">
+                                    <div class="avatar-circle">
+                                        <div class="avatar-inner"></div>
+            </div>
+            </div>
+                                <div class="message-content glass">
+                                    <div class="message-header">
+                                        <span class="sender">UnaniAI</span>
+            </div>
+                                    <p>{{ response|safe }}</p>
+            </div>
+        </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reminder Modal -->
+    <div id="reminderModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Your Medicine Reminders</h2>
+                <button onclick="closeReminderModal()">&times;</button>
+                </div>
+            <div class="modal-body">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Medicine Name</th>
+                            <th>Dosage</th>
+                            <th>Schedule</th>
+                            <th>Start Date</th>
+                            <th>End Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for reminder in reminders %}
+                        <tr>
+                            <td>{{ reminder.medicine_name }}</td>
+                            <td>{{ reminder.dosage }}</td>
+                            <td>{{ reminder.schedule }}</td>
+                            <td>{{ reminder.start_date }}</td>
+                            <td>{{ reminder.end_date }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button onclick="openAddReminderModal()" class="btn btn-success">Add New Reminder</button>
+            </div>
+            </div>
+                </div>
+
+    <!-- Add Reminder Modal -->
+    <div id="addReminderModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add Medicine Reminder</h2>
+                <button onclick="closeAddReminderModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="addReminderForm">
+                    <label for="medicine_name">Medicine Name:</label>
+                    <input type="text" id="medicine_name" name="medicine_name" required><br><br>
+                    
+                    <label for="dosage">Dosage:</label>
+                    <input type="text" id="dosage" name="dosage" required><br><br>
+                    
+                    <label for="schedule">Schedule (e.g., 08:00 AM, 02:00 PM, 08:00 PM):</label>
+                    <input type="text" id="schedule" name="schedule" required><br><br>
+                    
+                    <label for="start_date">Start Date:</label>
+                    <input type="date" id="start_date" name="start_date" required><br><br>
+                    
+                    <label for="end_date">End Date:</label>
+                    <input type="date" id="end_date" name="end_date"><br><br>
+                    
+                    <button type="submit" class="btn btn-primary">Save</button>
+                    <button type="button" onclick="closeAddReminderModal()" class="btn btn-secondary">Cancel</button>
+                </form>
+        </div>
+        </div>
+    </div>
+
+    <!-- Blank Window -->
+    <div id="blank-window">
+        <div id="blank-window-content">
+            <h2>Body Parts</h2>
+            <div class="body-part-images">
+                {% comment %} <figure>
+                    <img src="{{ url_for('static', filename='images/head.png') }}" alt="Head" onclick="showBodyPartInfo('Head')">
+                    <figcaption>Head</figcaption>
+                </figure>
+                <figure>
+                    <img src="{{ url_for('static', filename='images/heart.jpg') }}" alt="Heart" onclick="showBodyPartInfo('Heart')">
+                    <figcaption>Heart</figcaption>
+                </figure>
+                <figure>
+                    <img src="{{ url_for('static', filename='images/intestine.png') }}" alt="Intestine" onclick="showBodyPartInfo('Intestine')">
+                    <figcaption>Intestine</figcaption>
+                </figure>
+                <figure>
+                    <img src="{{ url_for('static', filename='images/lungs.png') }}" alt="Lungs" onclick="showBodyPartInfo('Lungs')">
+                    <figcaption>Lungs</figcaption>
+                </figure>
+                <figure>
+                    <img src="{{ url_for('static', filename='images/liver.png') }}" alt="Liver" onclick="showBodyPartInfo('Liver')">
+                    <figcaption>Liver</figcaption>
+                </figure> {% endcomment %}
+            </div>
+            <button class="close-blank-window-btn" onclick="closeBlankWindow()">Close</button>
+        </div>
+    </div>
+    
+    
+
+    <script>
+        // Auto-resizing textarea
+        document.querySelector(".chat-input").addEventListener("input", function() {
+            this.style.height = "auto";
+            this.style.height = (this.scrollHeight) + "px";
+        });
+    
+        // Submit the form via AJAX when Enter is pressed or button clicked
+        document.querySelector(".chat-form").addEventListener("submit", function(event) {
+            event.preventDefault();  // Prevent form submission
+            submitMessage();  // Call the function to submit the form using AJAX
+        });
+        
+        // Also handle Enter key press for better user experience
+        document.querySelector(".chat-input").addEventListener("keydown", function(event) {
+            if (event.key === "Enter" && !event.shiftKey) {  // If Enter is pressed without Shift
+                event.preventDefault();  // Prevent newline character
+                submitMessage();  // Call the function to submit
+            }
+        });
+        
+        // Fix for mobile keyboard pushing content
+        window.addEventListener('resize', function() {
+            // Reset the chat container height
+            adjustLayoutForMobile();
+        });
+        
+        // Initial call on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            adjustLayoutForMobile();
+            scrollToBottom();
+            fixTableStyles();
+            
+            // Detect mobile keyboard visibility
+            const chatInput = document.querySelector(".chat-input");
+            chatInput.addEventListener('focus', adjustLayoutForMobile);
+            chatInput.addEventListener('blur', adjustLayoutForMobile);
+        });
+        
+        // Function to adjust layout for mobile
+        function adjustLayoutForMobile() {
+            // Get window height
+            const windowHeight = window.innerHeight;
+            const chatMessages = document.querySelector(".chat-messages");
+            const inputContainer = document.querySelector(".chat-input-container");
+            const headerHeight = 60; // Header height
+            
+            // Calculate and set messages container height
+            chatMessages.style.height = (windowHeight - headerHeight - inputContainer.offsetHeight) + 'px';
+            
+            // Scroll to bottom after layout adjustment
+            scrollToBottom();
+        }
+        
+        // Function to handle form submission with AJAX
+        function submitMessage() {
+            const message = document.querySelector(".chat-input").value;  // Get the message
+            
+            if (message.trim() === "") return;  // If the message is empty, do nothing
+    
+            // Add the user's message to the chat immediately
+            addMessageToChat("You", message);
+    
+            // Clear the input field and reset its height
+            const chatInput = document.querySelector(".chat-input");
+            chatInput.value = '';
+            chatInput.style.height = "auto";
+            
+            // Scroll to ensure the new message is visible
+            scrollToBottom();
+            
+            // Show loading indicator
+            const loadingIndicator = document.querySelector(".loading-indicator");
+            loadingIndicator.classList.add("active");
+    
+            fetch("/chat", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ message: message })  // Send the message in JSON format
+            })
+            .then(response => response.json())  // Parse the JSON response
+            .then(data => {
+                // Hide loading indicator
+                loadingIndicator.classList.remove("active");
+                
+                // Handle the response (add AI's message to the chat)
+                if (data.response) {
+                    addMessageToChat("UnaniAI", data.response);
+                    // Apply fix after rendering
+                    setTimeout(fixTableStyles, 100);
+                } else if (data.error) {
+                    console.error("Error:", data.error);
+                }
+            })
+            .catch(error => {
+                // Hide loading indicator on error
+                loadingIndicator.classList.remove("active");
+                console.error('Error:', error);
+            });
+        }
+    
+        // Function to add message to chat window
+        function addMessageToChat(sender, message) {
+            const chatMessages = document.querySelector(".chat-messages");
+            const isAI = sender === "UnaniAI";
+            
+            // Create group container (alternating backgrounds like ChatGPT)
+            const messageGroup = document.createElement("div");
+            messageGroup.classList.add("message-group");
+            messageGroup.classList.add(isAI ? "ai" : "user");
+        
+            // Create message container
+            const messageDiv = document.createElement("div");
+            messageDiv.classList.add("message", isAI ? "ai-message" : "user-message");
+        
+            // Create avatar
+            const avatarDiv = document.createElement("div");
+            avatarDiv.classList.add("message-avatar");
+            
+            if (isAI) {
+                // Create AI avatar with circle
+                const avatarCircle = document.createElement("div");
+                avatarCircle.classList.add("avatar-circle");
+                
+                const avatarInner = document.createElement("div");
+                avatarInner.classList.add("avatar-inner");
+                
+                avatarCircle.appendChild(avatarInner);
+                avatarDiv.appendChild(avatarCircle);
+            } else {
+                avatarDiv.innerText = "You";
+            }
+        
+            // Create message content
+            const contentDiv = document.createElement("div");
+            contentDiv.classList.add("message-content", "glass");
+        
+            // Create message header
+            const headerDiv = document.createElement("div");
+            headerDiv.classList.add("message-header");
+            headerDiv.innerHTML = `<span class="sender">${sender}</span>`;
+            
+            // Process markdown tables before adding to DOM
+            let processedMessage = message;
+            if (isAI && message.includes("|")) {
+                // Fix table formatting
+                processedMessage = processTableContent(message);
+            }
+            
+            // Create message text
+            const messageText = document.createElement("div");
+            messageText.classList.add("message-text");
+            messageText.innerHTML = processedMessage; // Using innerHTML to support HTML formatting
+        
+            // Assemble the message
+            contentDiv.appendChild(headerDiv);
+            contentDiv.appendChild(messageText);
+        
+            messageDiv.appendChild(avatarDiv);
+            messageDiv.appendChild(contentDiv);
+
+            // Add message to group
+            messageGroup.appendChild(messageDiv);
+        
+            // Add group to chat
+            chatMessages.appendChild(messageGroup);
+            
+            // Apply fix after adding AI message
+            if (isAI) {
+                setTimeout(fixTableStyles, 100);
+            }
+            
+            // Always scroll to the bottom to show new messages (ChatGPT style)
+            setTimeout(function() {
+                scrollToBottom();
+            }, 10);
+        }
+        
+        // Function to scroll chat to bottom
+        function scrollToBottom() {
+            const chatMessages = document.querySelector(".chat-messages");
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
+        // Function to process and format table content from markdown
+        function processTableContent(message) {
+            // Find markdown table pattern
+            const tableRegex = /([^\n]+\|[^\n]+\n)((?:\s*\|?\s*:?-+:?\s*\|?)+\n)((?:[^\n]+\|[^\n]+\n)+)/g;
+            
+            return message.replace(tableRegex, function(match, headerRow, separatorRow, bodyRows) {
+                try {
+                    // Process header row
+                    const headers = headerRow.trim().split('|').map(h => h.trim()).filter(h => h !== '');
+                    
+                    // Process body rows
+                    const rows = bodyRows.trim().split('\n');
+                    
+                    // Generate mobile-friendly HTML table
+                    let tableHtml = '<div class="table-responsive"><table class="mobile-friendly-table">';
+                    
+                    // Add header row
+                    tableHtml += '<thead><tr>';
+                    headers.forEach(header => {
+                        tableHtml += `<th>${header}</th>`;
+                    });
+                    tableHtml += '</tr></thead>';
+                    
+                    // Add body rows
+                    tableHtml += '<tbody>';
+                    rows.forEach(row => {
+                        const cells = row.trim().split('|').map(c => c.trim()).filter(c => c !== '');
+                        tableHtml += '<tr>';
+                        cells.forEach(cell => {
+                            tableHtml += `<td>${cell}</td>`;
+                        });
+                        tableHtml += '</tr>';
+                    });
+                    
+                    tableHtml += '</tbody></table></div>';
+                    return tableHtml;
+                } catch (e) {
+                    console.error("Error processing table:", e);
+                    return match; // Return original if processing fails
+                }
+            });
+        }
+
+        // Function to fix table styles with direct DOM manipulation
+        function fixTableStyles() {
+            // Find all tables in message content
+            document.querySelectorAll('.message-content table').forEach(table => {
+                // Make table mobile friendly
+                table.classList.add('mobile-friendly-table');
+                
+                // Set table properties
+                table.style.width = '100%';
+                table.style.borderCollapse = 'collapse';
+                table.style.margin = '15px 0';
+                table.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.15)';
+                
+                // Find all th elements in the table
+                table.querySelectorAll('th').forEach(th => {
+                    // Apply inline styles with !important
+                    th.style.cssText = 'color: #ffffff !important; background-color: #0f1117 !important; font-weight: bold !important; padding: 10px 12px !important; text-align: left !important; border: 1px solid #343541 !important;';
+                    // Fix any inner elements
+                    Array.from(th.children).forEach(child => {
+                        child.style.cssText = 'color: #ffffff !important;';
+                    });
+                });
+                
+                // Style table cells
+                table.querySelectorAll('td').forEach(td => {
+                    td.style.cssText = 'padding: 10px 12px !important; background: #0f1117 !important; color: #ffffff !important; border: 1px solid #343541 !important; text-align: left !important;';
+                });
+                
+                // Ensure table is wrapped in a responsive container
+                const parent = table.parentNode;
+                if (!parent.classList.contains('table-responsive')) {
+                    const container = document.createElement('div');
+                    container.classList.add('table-responsive');
+                    parent.insertBefore(container, table);
+                    container.appendChild(table);
+                }
+            });
+            
+            // Make sure all message content is properly sized
+            document.querySelectorAll('.message-content').forEach(content => {
+                content.style.maxWidth = '100%';
+                content.style.width = '100%';
+                content.style.wordBreak = 'break-word';
+                content.style.overflowWrap = 'break-word';
+            });
+        }
+
+        // Function to toggle sidebar
+        function toggleSidebar() {
+            const sidebar = document.getElementById("sidebar");
+            const menuBtn = document.querySelector(".menu-btn");
+            const backdrop = document.getElementById("sidebar-backdrop");
+            sidebar.classList.toggle("open");
+            menuBtn.classList.toggle("hide"); // Hide/show menu button
+            backdrop.classList.toggle("active"); // Toggle backdrop
+        }
+
+        // Function to toggle history window
+        function toggleHistory() {
+            const historyWindow = document.getElementById("historyWindow");
+            const chatMain = document.querySelector(".chat-main");
+        
+            if (historyWindow.style.display === "none" || historyWindow.style.display === "") {
+                historyWindow.style.display = "block"; // Show history window
+                chatMain.style.display = "none"; // Hide chat window
+            } else {
+                historyWindow.style.display = "none"; // Hide history window
+                chatMain.style.display = "flex"; // Show chat window (use flex to maintain layout)
+            }
+        }
+
+        // Function to handle logout
+        function logout() {
+            fetch("/logout", {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => {
+                if (response.ok) {
+                    window.location.href = "/";  // Redirect to home page
+                } else {
+                    console.error("Logout failed");
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+        // Function to open blank window
+        function openBlankWindow() {
+            const blankWindow = document.getElementById("blank-window");
+            blankWindow.style.display = "flex";
+        }
+
+        // Function to close blank window
+        function closeBlankWindow() {
+            const blankWindow = document.getElementById("blank-window");
+            blankWindow.style.display = "none";
+        }
+
+        // Function to show body part info and display dropdown in chat
+        function showBodyPartInfo(part) {
+            // Close the blank window
+            closeBlankWindow();
+
+            // Get the chat input container
+            const chatInputContainer = document.querySelector(".chat-input-container");
+
+            // Create a dropdown element
+            const dropdown = document.createElement("select");
+            dropdown.classList.add("disease-dropdown");
+            dropdown.innerHTML = `<option value="">Select a disease related to ${part}</option>`;
+
+            // Add diseases to the dropdown
+            const diseases = {
+                Head: ["Migraine", "Sinusitis", "Tension Headache", "Cluster Headache"],
+                Heart: ["Hypertension", "Coronary Artery Disease", "Arrhythmia", "Heart Failure"],
+                Intestine: ["Irritable Bowel Syndrome", "Ulcerative Colitis", "Crohn's Disease", "Diverticulitis"],
+                Lungs: ["Asthma", "Chronic Obstructive Pulmonary Disease", "Pneumonia", "Lung Cancer"],
+                Liver: ["Hepatitis", "Cirrhosis", "Fatty Liver Disease", "Liver Cancer"]
+            };
+
+            diseases[part].forEach(disease => {
+                const option = document.createElement("option");
+                option.value = disease;
+                option.textContent = disease;
+                dropdown.appendChild(option);
+            });
+
+            // Add an event listener to the dropdown
+            dropdown.addEventListener("change", function () {
+                if (this.value) {
+                    // Add the selected disease to the chat input
+                    const chatInput = document.querySelector(".chat-input");
+                    chatInput.value = `Tell me about ${this.value}`;
+                    submitMessage(); // Automatically submit the message
+                    dropdown.remove();
+                }
+            });
+
+            // Append the dropdown to the chat input container
+            chatInputContainer.insertBefore(dropdown, chatInputContainer.firstChild);
+        }
+    </script>
+
+    <!-- Additional script to ensure user messages are styled correctly -->
+    <script>
+        // Force dark styles on user messages
+        function fixUserMessageStyles() {
+            const userMessages = document.querySelectorAll('.user-message .message-content');
+            userMessages.forEach(message => {
+                // Apply inline styles directly to each element
+                message.style.backgroundColor = 'rgba(16, 23, 34, 0.9)';
+                message.style.color = '#e2e8f0';
+                message.style.border = '1px solid rgba(66, 82, 110, 0.15)';
+                message.style.boxShadow = '0 1px 4px rgba(0, 0, 0, 0.2)';
+                
+                // Force text color on all child elements
+                const textElements = message.querySelectorAll('p, span, div');
+                textElements.forEach(el => {
+                    el.style.color = '#e2e8f0';
+                });
+            });
+            
+            // Style user avatars
+            const userAvatars = document.querySelectorAll('.user-message .message-avatar');
+            userAvatars.forEach(avatar => {
+                avatar.style.backgroundColor = 'rgba(14, 24, 36, 0.9)';
+                avatar.style.color = '#66d9e8';
+                avatar.style.border = '1px solid rgba(102, 217, 232, 0.2)';
+            });
+        }
+        
+        // Run on page load
+        document.addEventListener('DOMContentLoaded', fixUserMessageStyles);
+        
+        // Add to message creation
+        const originalAddMessageToChat = addMessageToChat;
+        addMessageToChat = function(sender, message) {
+            originalAddMessageToChat(sender, message);
+            // Run after a slight delay to ensure DOM is updated
+            setTimeout(fixUserMessageStyles, 50);
+        };
+    </script>
+
+    <!-- Auto-scroll to bottom script -->
+    <script>
+        // Function to scroll to the very bottom of the page
+        function scrollToPageBottom() {
+            window.scrollTo(0, document.body.scrollHeight);
+        }
+        
+        // Run on page load
+        document.addEventListener('DOMContentLoaded', scrollToPageBottom);
+        
+        // Also run after a small delay to ensure all content is loaded
+        window.addEventListener('load', function() {
+            setTimeout(scrollToPageBottom, 100);
+        });
+    </script>
 </body>
 </html>
