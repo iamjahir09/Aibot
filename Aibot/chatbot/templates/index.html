@@ -1524,12 +1524,7 @@
 
         <!-- History Window -->
         <div class="history-window glass" id="historyWindow" style="display: none;">
-           <!-- Chat History Button -->
-<button class="history-btn" onclick="toggleHistory()">
-    <i class="fas fa-history btn-icon"></i>
-    <span>Chat History</span>
-    <div class="btn-glow"></div>
-</button>
+           
 
 <!-- Chat History Modal -->
 <div id="history-modal" class="history-modal">
@@ -1972,6 +1967,13 @@
             backdrop.classList.toggle("active"); // Toggle backdrop
         }
 
+        // Function to toggle the visibility of the chat history window
+function toggleHistory() {
+    const historyWindow = document.getElementById('historyWindow');
+    historyWindow.style.display = (historyWindow.style.display === 'none' || historyWindow.style.display === '') ? 'block' : 'none';
+}
+
+
         // Function to toggle history window
         
             // Function to toggle the chat history modal
@@ -1985,7 +1987,7 @@ function toggleHistory() {
 }
 
 // Function to fetch and display the chat history
-function fetchChatHistory() {
+{% comment %} function fetchChatHistory() {
     fetch('/get-chat-history/')
         .then(response => response.json())
         .then(data => {
@@ -2008,7 +2010,7 @@ function fetchChatHistory() {
         .catch(error => {
             console.error('Error fetching chat history:', error);
         });
-}
+} {% endcomment %}
 
 // Function to show full conversation for a disease
 function showConversationHistory(disease) {

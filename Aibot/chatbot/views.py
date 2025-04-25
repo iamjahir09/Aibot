@@ -1,4 +1,4 @@
-from django.http import JsonResponse, HttpResponse
+from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import requests
 import os
@@ -8,6 +8,11 @@ import re
 from django.shortcuts import render
 import sqlite3
 from datetime import datetime
+from django.contrib.auth import logout as auth_logout
+from django.contrib.auth import logout
+from django.shortcuts import redirect
+
+
 
 # Load environment variables
 load_dotenv()
@@ -24,7 +29,7 @@ def create_database():
     cursor.execute('PRAGMA foreign_keys = ON;')
 
     # Users table
-    cursor.execute('''
+    cursor.execute(''' 
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             email TEXT UNIQUE NOT NULL,
@@ -33,7 +38,7 @@ def create_database():
     ''')
 
     # Conversations table
-    cursor.execute('''
+    cursor.execute(''' 
         CREATE TABLE IF NOT EXISTS conversations (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER NOT NULL,
@@ -45,7 +50,7 @@ def create_database():
     ''')
 
     # Medicine Reminders table
-    cursor.execute('''
+    cursor.execute(''' 
         CREATE TABLE IF NOT EXISTS medicine_reminders (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER NOT NULL,
@@ -59,7 +64,7 @@ def create_database():
     ''')
 
     # Unani Ingredients table
-    cursor.execute('''
+    cursor.execute(''' 
         CREATE TABLE IF NOT EXISTS unani_ingredients (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             ingredient_name TEXT NOT NULL,
@@ -70,7 +75,7 @@ def create_database():
     ''')
 
     # Unani response cache table
-    cursor.execute('''
+    cursor.execute(''' 
         CREATE TABLE IF NOT EXISTS unani_responses (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             disease TEXT UNIQUE NOT NULL,
@@ -85,183 +90,6 @@ def create_database():
 
 create_database()
 
-
-Unani_doctor_INSTRUCTION = """
-You are Unani-doctor, a specialized assistant in Unani medicine. Respond to each query within **1 minute**.
-
-1. FIRST, validate if the user query contains a real and globally recognized disease name.
-   - If the disease does NOT exist or is misspelled, REPLY: "Sorry, this disease does not exist. Please recheck the name."
-
-2. If the disease exists, follow this exact structure:
-   - Start with: "Addressing [Condition] with Unani"
-   - Provide a BRIEF explanation of the disease based on Unani humoral theory (balgham, dam, safra, sauda).
-   - DO NOT explain unrelated diseases or give general health tips.
-
-3. After explanation, present a CLEAR TABLE with the following columns:
-   Ingredient | Benefits | Usage | Precautions
-
-4. In the table:
-   - Each ingredient must be a verified Unani remedy relevant to the condition.
-   - Include the **common name** of the ingredient in brackets like this: Haritaki (Terminalia chebula)
-   - All benefits must be medically and traditionally accurate.
-   - Dosage and precautions should be realistic and medically safe.
-   - DO NOT mix botanical names (e.g., Haritaki ≠ Belleric Myrobalan)
-
-5. List only 4–5 ingredients MAXIMUM.
-6. DO NOT use mixed, incorrect, or non-existent ingredient mappings.
-7. DO NOT hallucinate information. If unsure, say "Research ongoing".
-
-8. Finish with the exact sentence: "I hope you find the cure, Takecare"
-
-9. DO NOT answer anything unrelated to diseases or Unani treatment.
-   - If the user asks something off-topic (e.g., politics, tech, jokes), reply: 
-     "I'm your Unani health assistant. I can only help with Unani-based health queries."
-
-Note: Answer should be provided **within 1 minute**.
-User:
-"""
-
-
-def index(request):
-    return render(request, 'index.html')
-
-def home(request):
-    return render(request, 'home.html')
-
-from django.contrib.auth import logout as auth_logout
-
-from django.contrib.auth import logout
-from django.shortcuts import redirect
-from .models import UserStatus
-
-def logout(request):
-    # Get the current user
-    user = request.user
-    
-    # Set the user's status to 'Logged Out'
-    if user.is_authenticated:
-        user_status = UserStatus.objects.get(user=user)
-        user_status.is_logged_in = False
-        user_status.save()
-        
-    # Perform the logout operation
-    logout(request)
-    
-    return redirect('home')  # Redirect to the homepage or login page after logout
-
-
-from django.http import JsonResponse
-
-from django.http import JsonResponse
-from .models import UserStatus
-
-def check_session(request):
-    if request.user.is_authenticated:
-        try:
-            user_status = UserStatus.objects.get(user=request.user)
-            if user_status.is_logged_in:
-                return JsonResponse({'logged_in': True})
-            else:
-                return JsonResponse({'logged_in': False})
-        except UserStatus.DoesNotExist:
-            return JsonResponse({'logged_in': False})
-    else:
-        return JsonResponse({'logged_in': False})
-
-
-
-@csrf_exempt
-def signup(request):
-    if request.method == 'POST':
-        try:
-            email = request.POST.get('email')
-            password = request.POST.get('password')
-
-            if not email or not password:
-                return render(request, 'signup.html', {'error': 'Email and password are required.'})
-
-            conn = sqlite3.connect('user_details.db')
-            cursor = conn.cursor()
-
-            # Check if user already exists
-            cursor.execute("SELECT * FROM users WHERE email = ?", (email,))
-            if cursor.fetchone():
-                conn.close()
-                return render(request, 'signup.html', {'error': 'User already exists.'})
-
-            # Insert new user
-            cursor.execute("INSERT INTO users (email, password) VALUES (?, ?)", (email, password))
-            conn.commit()
-            conn.close()
-
-            return render(request, 'login.html', {'message': 'Signup successful! Please login.'})
-
-        except Exception as e:
-            return render(request, 'signup.html', {'error': f'Error: {str(e)}'})
-
-    return render(request, 'signup.html')
-
-
-from django.shortcuts import redirect
-
-@csrf_exempt
-def login(request):
-    if request.method == 'POST':
-        try:
-            email = request.POST.get('email')
-            password = request.POST.get('password')
-
-            conn = sqlite3.connect('user_details.db')
-            cursor = conn.cursor()
-
-            # Check if user exists with matching email and password
-            cursor.execute("SELECT * FROM users WHERE email = ? AND password = ?", (email, password))
-            user = cursor.fetchone()
-            conn.close()
-
-            if user:
-                request.session['user_id'] = user[0]
-                return redirect('index')  # 'index' must be the name of your URL pattern for index.html
-            else:
-                return render(request, 'login.html', {'error': 'Invalid email or password.'})
-
-        except Exception as e:
-            return render(request, 'login.html', {'error': f'Error: {str(e)}'})
-
-    return render(request, 'login.html')
-
-import sqlite3
-import re
-import json
-import requests
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-
-# Helper function to check if the disease exists in the database and return its ingredients
-def get_disease_ingredients(disease):
-    """
-    Returns the ingredients associated with a given disease if it exists in the database.
-    """
-    try:
-        conn = sqlite3.connect('user_details.db')
-        cursor = conn.cursor()
-
-        # Query to find the disease and associated ingredients
-        cursor.execute("SELECT response FROM unani_responses WHERE disease LIKE ?", ('%' + disease + '%',))
-        result = cursor.fetchone()
-
-        conn.close()
-
-        if result:
-            return result[0]  # Returning ingredients list as a string or JSON
-        else:
-            return None  # No match found
-    except Exception as e:
-        print(f"Error in get_disease_ingredients: {str(e)}")
-        return None
-
-
-@csrf_exempt
 @csrf_exempt
 def chat(request):
     if request.method == 'POST':
@@ -325,6 +153,7 @@ def chat(request):
 
             response = requests.post(f"{OLLAMA_API_URL}/api/generate", json=ollama_payload)
 
+            
             if response.status_code == 200:
                 result = response.json()
                 model_response = result.get("response", "No response from model")
@@ -354,8 +183,247 @@ def chat(request):
         except Exception as e:
             print(f"Error in chat endpoint: {str(e)}")
             return JsonResponse({"error": str(e)}, status=500)
-
     return JsonResponse({"error": "Invalid request method"}, status=405)
+
+
+def get_user_id_from_email(email):
+    """
+    Fetch user_id from the users table using the email.
+    """
+    conn = sqlite3.connect('user_details.db')
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT id FROM users WHERE email = ?", (email,))
+    result = cursor.fetchone()
+
+    conn.close()
+
+    if result:
+        return result[0]  # Return user ID
+    else:
+        raise ValueError("User not found")
+
+def store_conversation(request, user_message, bot_response):
+    email = request.session.get('email')  # Fetch user email from session
+    if not email:
+        raise ValueError("User email not found in session")
+    
+    # Fetch user ID using email
+    user_id = get_user_id_from_email(email)
+    
+    conn = sqlite3.connect('user_details.db')
+    cursor = conn.cursor()
+
+    cursor.execute("PRAGMA foreign_keys = ON")
+
+    cursor.execute(""" 
+        INSERT INTO conversations (user_id, message, response, timestamp)
+        VALUES (?, ?, ?, ?)
+    """, (user_id, user_message, bot_response, datetime.now()))
+
+    conn.commit()
+    conn.close()
+
+def get_user_conversations(user_id):
+    conn = sqlite3.connect('user_details.db')
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT message, response, timestamp
+        FROM conversations
+        WHERE user_id = ?
+        ORDER BY timestamp ASC
+    """, (user_id,))
+    
+    chats = cursor.fetchall()
+    conn.close()
+    return chats
+
+
+
+
+
+Unani_doctor_INSTRUCTION = """
+You are Unani-doctor, a specialized assistant in Unani medicine. Respond to each query within **1 minute**.
+
+1. FIRST, validate if the user query contains a real and globally recognized disease name.
+   - If the disease does NOT exist or is misspelled, REPLY: "Sorry, this disease does not exist. Please recheck the name."
+
+2. If the query is about a specific Unani ingredient (e.g., saffron, haritaki):
+   - DO NOT provide a table.
+   - Respond with exactly 7 bullet points.
+   - Each point should be MAX 2 lines.
+   - Include known Unani benefits, traditional uses, and medicinal effects.
+   - Avoid false claims or unverified data.
+
+3. If the disease exists, follow this exact structure:
+   - Start with: "Addressing [Condition] with Unani"
+   - Provide a BRIEF explanation of the disease based on Unani humoral theory (balgham, dam, safra, sauda).
+   - DO NOT explain unrelated diseases or give general health tips.
+
+4. After explanation, present a CLEAR TABLE with the following columns:
+   Ingredient | Benefits | Usage | Precautions
+
+5. In the table:
+   - Each ingredient must be a verified Unani remedy relevant to the condition.
+   - Include the **common name** of the ingredient in brackets like this: Haritaki (Terminalia chebula)
+   - All benefits must be medically and traditionally accurate.
+   - Dosage and precautions should be realistic and medically safe.
+   - DO NOT mix botanical names (e.g., Haritaki ≠ Belleric Myrobalan)
+
+6. List only 4–5 ingredients MAXIMUM.
+7. DO NOT use mixed, incorrect, or non-existent ingredient mappings.
+8. DO NOT hallucinate information. If unsure, say "Research ongoing".
+
+9. Finish with the exact sentence: "I hope you find the cure. Take care! "
+
+10. DO NOT answer anything unrelated to diseases or Unani treatment.
+   - If the user asks something off-topic (e.g., politics, tech, jokes), reply: 
+     "I'm your Unani health assistant. I can only help with Unani-based health queries."
+
+11. User Language Detection:
+    -Respond in the language that the user is using, whether it's Hindi, Marathi, Urdu, Hinglish, Turkish, or any other global language.
+    -The response will match the language of the user's sentence, regardless of the script used (e.g., Marathi, Hindi, Urdu, Hinglish).
+
+12. Ingredient Information:
+    -If the user asks for details about any ingredient, provide information in bullet points.
+    -Limit to 6 points maximum.
+    -Each point should be short (max 2 lines per point).
+
+Note: Answer should be provided **within 1 minute**.
+User:
+"""
+
+
+def index(request):
+    return render(request, 'index.html')
+
+def home(request):
+    return render(request, 'home.html')
+
+
+
+def logout_view(request):
+    try:
+        del request.session['user_id']  # session clear karo
+    except KeyError:
+        pass
+    return redirect('home')  # ya login page
+
+
+
+
+def check_session(request):
+    if 'user_id' in request.session:
+        return JsonResponse({'logged_in': True})
+    else:
+        return JsonResponse({'logged_in': False})
+
+
+
+@csrf_exempt
+def signup(request):
+    if request.method == 'POST':
+        try:
+            email = request.POST.get('email')
+            password = request.POST.get('password')
+
+            if not email or not password:
+                return render(request, 'signup.html', {'error': 'Email and password are required.'})
+
+            conn = sqlite3.connect('user_details.db')
+            cursor = conn.cursor()
+
+            # Check if user already exists
+            cursor.execute("SELECT * FROM users WHERE email = ?", (email,))
+            if cursor.fetchone():
+                conn.close()
+                return render(request, 'signup.html', {'error': 'User already exists.'})
+
+            # Insert new user
+            cursor.execute("INSERT INTO users (email, password) VALUES (?, ?)", (email, password))
+            conn.commit()
+            conn.close()
+
+            return render(request, 'login.html', {'message': 'Signup successful! Please login.'})
+
+        except Exception as e:
+            return render(request, 'signup.html', {'error': f'Error: {str(e)}'})
+
+    return render(request, 'signup.html')
+
+
+from django.shortcuts import redirect
+
+@csrf_exempt
+def login(request):
+    if request.method == 'POST':
+        try:
+            email = request.POST.get('email')
+            password = request.POST.get('password')
+
+            conn = sqlite3.connect('user_details.db')
+            cursor = conn.cursor()
+
+            cursor.execute("SELECT id FROM users WHERE email = ? AND password = ?", (email, password))
+            user = cursor.fetchone()
+            conn.close()
+
+            if user:
+                request.session['user_id'] = user[0]
+                request.session.set_expiry(60 * 60 * 24 * 365)  # 1 saal tak login
+                return redirect('index')
+            else:
+                return render(request, 'login.html', {'error': 'Invalid email or password.'})
+
+        except Exception as e:
+            return render(request, 'login.html', {'error': f'Error: {str(e)}'})
+
+    return render(request, 'login.html')
+
+
+
+# Helper function to check if the disease exists in the database and return its ingredients
+def get_disease_ingredients(disease):
+    """
+    Returns the ingredients associated with a given disease if it exists in the database.
+    """
+    try:
+        conn = sqlite3.connect('user_details.db')
+        cursor = conn.cursor()
+
+        # Query to find the disease and associated ingredients
+        cursor.execute("SELECT response FROM unani_responses WHERE disease LIKE ?", ('%' + disease + '%',))
+        result = cursor.fetchone()
+
+        conn.close()
+
+        if result:
+            return result[0]  # Returning ingredients list as a string or JSON
+        else:
+            return None  # No match found
+    except Exception as e:
+        print(f"Error in get_disease_ingredients: {str(e)}")
+        return None
+
+
+@csrf_exempt
+def get_conversation_history(user_id):
+    """
+    Fetches conversation history for a specific user.
+    """
+    conn = sqlite3.connect('user_details.db')
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT message, response, timestamp
+        FROM conversations
+        WHERE user_id = ?
+        ORDER BY timestamp ASC
+    ''', (user_id,))
+    history = cursor.fetchall()
+    conn.close()
+    return history
+
 
 @csrf_exempt
 def get_models(request):
@@ -442,8 +510,8 @@ def chatbot_response(request):
 
     return JsonResponse({"error": "Invalid request method"}, status=405)
 
-# views.py
-from django.http import JsonResponse
+
+
 
 def check_login_status(request):
     return JsonResponse({'is_authenticated': request.user.is_authenticated})
