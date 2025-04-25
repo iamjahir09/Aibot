@@ -90,6 +90,116 @@ def create_database():
 
 create_database()
 
+# @csrf_exempt
+# def chat(request):
+#     if request.method == 'POST':
+#         try:
+#             data = json.loads(request.body)
+#             user_message = data.get('message', '').lower().strip()
+#             model = data.get('model', DEFAULT_MODEL)
+
+#             # Greeting responses
+#             greetings_responses = {
+#                 "hi": "Hi there! How can I assist you today?",
+#                 "hello": "Hello! How can I help you?",
+#                 "hey": "Hey! What can I do for you?",
+#                 "greetings": "Greetings! What brings you here today?",
+#                 "good morning": "Good morning! Hope you're feeling well.",
+#                 "good afternoon": "Good afternoon! How can I help you?",
+#                 "good evening": "Good evening! What can I do for you?",
+#                 "salam": "Wa alaikum assalam! How may I assist you today?",
+#                 "assalamualaikum": "Wa alaikum assalam! How may I help you?",
+#                 "assalamu alaikum": "Wa alaikum assalam! How can I assist you today?"
+#             }
+
+#             if user_message in greetings_responses:
+#                 return JsonResponse({"response": greetings_responses[user_message]})
+
+#             # Identity questions
+#             identity_patterns = [
+#                 r"who are you",
+#                 r"what are you", 
+#                 r"what is your name", 
+#                 r"introduce yourself"
+#             ]
+#             if any(re.search(pattern, user_message) for pattern in identity_patterns):
+#                 return JsonResponse({"response": "I am Unani-doctor, a specialized assistant in Unani and traditional Tibb medicine."})
+
+#             # Step 1: Match user message with known diseases dynamically
+#             conn = sqlite3.connect("user_details.db")
+#             cursor = conn.cursor()
+#             cursor.execute("SELECT disease, response FROM unani_responses")
+#             rows = cursor.fetchall()
+
+#             matched_response = None
+#             for disease, response in rows:
+#                 # Look for the disease name in the user message (case insensitive)
+#                 pattern = r'\b' + re.escape(disease.lower()) + r'\b'
+#                 if re.search(pattern, user_message):
+#                     matched_response = response
+#                     break
+
+#             if matched_response:
+#                 conn.close()
+#                 return JsonResponse({"response": matched_response})
+
+#             # Step 2: No match found, call Ollama model
+#             enhanced_message = Unani_doctor_INSTRUCTION + user_message
+#             ollama_payload = {
+#                 "model": model,
+#                 "prompt": enhanced_message,
+#                 "stream": False
+#             }
+
+#             response = requests.post(f"{OLLAMA_API_URL}/api/generate", json=ollama_payload)
+
+#             conn = sqlite3.connect('user_details.db')
+#             cursor = conn.cursor()
+            
+#             # Get user_id from session (if exists)
+#             user_id = request.session.get('user_id', None)
+            
+#             cursor.execute("""
+#                 INSERT INTO conversations (user_id, message, response, timestamp)
+#                 VALUES (?, ?, ?, ?)
+#             """, (user_id, user_message, response, datetime.now()))
+            
+#             conn.commit()
+#             conn.close()
+
+            
+#             if response.status_code == 200:
+#                 result = response.json()
+#                 model_response = result.get("response", "No response from model")
+
+#                 # Try to extract a disease name from prompt (fallback to full prompt)
+#                 extracted_disease = user_message.split()[0:5]
+#                 possible_disease = " ".join(extracted_disease)
+
+#                 # Store model response in database for future use
+#                 try:
+#                     cursor.execute("INSERT INTO unani_responses (disease, response) VALUES (?, ?)",
+#                                    (possible_disease, model_response))
+#                     conn.commit()
+
+#                     # After inserting, fetch the latest data to update the cache
+#                     cursor.execute("SELECT disease, response FROM unani_responses")
+#                     rows = cursor.fetchall()  # Refresh the database cache
+#                 except Exception as err:
+#                     print("Error while caching model response:", err)
+
+#                 conn.close()
+#                 return JsonResponse({"response": model_response})
+            
+#             else:
+#                 conn.close()
+#                 return JsonResponse({"error": f"Ollama API error: {response.status_code}"}, status=500)
+
+#         except Exception as e:
+#             print(f"Error in chat endpoint: {str(e)}")
+#             return JsonResponse({"error": str(e)}, status=500)
+#     return JsonResponse({"error": "Invalid request method"}, status=405)
+
 @csrf_exempt
 def chat(request):
     if request.method == 'POST':
@@ -151,41 +261,72 @@ def chat(request):
                 "stream": False
             }
 
-            response = requests.post(f"{OLLAMA_API_URL}/api/generate", json=ollama_payload)
-
+            api_response = requests.post(f"{OLLAMA_API_URL}/api/generate", json=ollama_payload)
             
-            if response.status_code == 200:
-                result = response.json()
+            if api_response.status_code == 200:
+                result = api_response.json()
                 model_response = result.get("response", "No response from model")
-
-                # Try to extract a disease name from prompt (fallback to full prompt)
-                extracted_disease = user_message.split()[0:5]
-                possible_disease = " ".join(extracted_disease)
-
-                # Store model response in database for future use
-                try:
-                    cursor.execute("INSERT INTO unani_responses (disease, response) VALUES (?, ?)",
-                                   (possible_disease, model_response))
-                    conn.commit()
-
-                    # After inserting, fetch the latest data to update the cache
-                    cursor.execute("SELECT disease, response FROM unani_responses")
-                    rows = cursor.fetchall()  # Refresh the database cache
-                except Exception as err:
-                    print("Error while caching model response:", err)
-
+                
+                # Store conversation in database
+                conn = sqlite3.connect('user_details.db')
+                cursor = conn.cursor()
+                
+                # Get user_id from session (if exists)
+                user_id = request.session.get('user_id', None)
+                
+                cursor.execute("""
+                    INSERT INTO conversations (user_id, message, response, timestamp)
+                    VALUES (?, ?, ?, ?)
+                """, (user_id, user_message, model_response, datetime.now()))
+                
+                # Extract disease name from the model response
+                disease_name = None
+                if "Addressing" in model_response and "with Unani" in model_response:
+                    # Extract disease name from the response format "Addressing [Condition] with Unani"
+                    start = model_response.find("Addressing") + len("Addressing")
+                    end = model_response.find("with Unani")
+                    disease_name = model_response[start:end].strip()
+                
+                # If not found in response, try to extract from user message
+                if not disease_name:
+                    # Simple pattern to extract potential disease names
+                    patterns = [
+                        r'i have ([\w\s]+)',
+                        r'i\'ve got ([\w\s]+)',
+                        r'suffering from ([\w\s]+)',
+                        r'have ([\w\s]+)',
+                        r'my ([\w\s]+)',
+                        r'treat ([\w\s]+)',
+                        r'cure for ([\w\s]+)'
+                    ]
+                    
+                    for pattern in patterns:
+                        match = re.search(pattern, user_message, re.IGNORECASE)
+                        if match:
+                            disease_name = match.group(1).strip()
+                            break
+                
+                # If we found a disease name, store it in unani_responses
+                if disease_name:
+                    try:
+                        cursor.execute("""
+                            INSERT OR REPLACE INTO unani_responses (disease, response) 
+                            VALUES (?, ?)
+                        """, (disease_name, model_response))
+                    except Exception as err:
+                        print("Error while caching model response:", err)
+                
+                conn.commit()
                 conn.close()
                 return JsonResponse({"response": model_response})
+            
             else:
-                conn.close()
-                return JsonResponse({"error": f"Ollama API error: {response.status_code}"}, status=500)
+                return JsonResponse({"error": f"Ollama API error: {api_response.status_code}"}, status=500)
 
         except Exception as e:
             print(f"Error in chat endpoint: {str(e)}")
             return JsonResponse({"error": str(e)}, status=500)
     return JsonResponse({"error": "Invalid request method"}, status=405)
-
-
 def get_user_id_from_email(email):
     """
     Fetch user_id from the users table using the email.

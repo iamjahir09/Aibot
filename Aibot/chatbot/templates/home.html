@@ -1,6 +1,6 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" style="scroll-behavior: smooth;">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,18 +8,46 @@
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
+<style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            overflow-x: hidden;
+            font-family: Arial, sans-serif;
+        }
+        
+        #particles-js {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: -1;
+        }
+        
+        /* Your existing steps section styling */
+        .steps {
+            padding: 5rem 2rem;
+            text-align: center;
+            background: transparent;
+        }
+        
+        /* Rest of your existing CSS... */
+    </style>
 <body>
     <!-- Navigation -->
-    <nav class="glass-nav">
+    
+    <nav class="glass-nav" style ="border-bottom:none">
         <div class="logo">
             <span class="neon-text">Unani</span>AI
         </div>
         <div class="nav-links">
             <a href="#" class="active">Home</a>
-            <a href="#">About</a>
-            <a href="#">Consult</a>
-            <a href="#">Remedies</a>
-            <a href="#">Contact</a>
+            <a href="#about">About</a>
+            <a href="#consult">Consult</a>
+            <a href="#steps">Steps</a>
+            <a href="#footer">Contact</a>
             <a href="{% url 'signup' %}" class="signup-btn glass">Sign Up</a> <!-- Added Sign Up Button -->
         </div>
     </nav>
@@ -65,112 +93,922 @@
         </div>
     </section>
 
-    <!-- Features Section -->
-    <section class="features">
-        <div class="feature-container">
-            <div class="feature-card glass">
-                <div class="feature-icon">🌿</div>
-                <h3>Natural Healing</h3>
-                <p>Discover the power of natural ingredients and ancient healing wisdom.</p>
-                <div class="card-glow"></div>
+    <section style="
+    padding: 5rem 2rem;
+    background: transparent;
+">
+    <div style="
+        max-width: 1200px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 2rem;
+    ">
+        <!-- Feature 1: Natural Healing -->
+        <div style="
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        " 
+        onmouseover="this.style.transform='translateY(-8px)'; this.style.boxShadow='0 12px 40px rgba(0,0,0,0.1)'" 
+        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 32px rgba(0,0,0,0.05)'">
+            <div style="
+                width: 60px;
+                height: 60px;
+                background: linear-gradient(135deg, #2c786c 0%, #4ca1a3 100%);
+                border-radius: 12px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin-bottom: 1.5rem;
+            ">
+                <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2v20M2 12h20M4.93 4.93l14.14 14.14M10.88 10.88l2.24 2.24M10.88 17.76l2.24-2.24M17.76 10.88l-2.24 2.24M7.76 7.76l2.24 2.24"/>
+                </svg>
+            </div>
+            <h3 style="
+                color: #2c786c;
+                font-size: 1.4rem;
+                margin-bottom: 1rem;
+            ">Natural Healing</h3>
+            <p style="
+                color: #5a6f7b;
+                font-size: 1rem;
+                line-height: 1.6;
+                margin: 0;
+            ">Get personalized herbal remedies based on your unique health profile.</p>
+        </div>
+
+        <!-- Feature 2: Personalized Care -->
+        <div style="
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        " 
+        onmouseover="this.style.transform='translateY(-8px)'; this.style.boxShadow='0 12px 40px rgba(0,0,0,0.1)'" 
+        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 32px rgba(0,0,0,0.05)'">
+            <div style="
+                width: 60px;
+                height: 60px;
+                background: linear-gradient(135deg, #6c63ff 0%, #9c63ff 100%);
+                border-radius: 12px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin-bottom: 1.5rem;
+            ">
+                <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+                </svg>
+            </div>
+            <h3 style="
+                color: #2c786c;
+                font-size: 1.4rem;
+                margin-bottom: 1rem;
+            ">Personalized Care</h3>
+            <p style="
+                color: #5a6f7b;
+                font-size: 1rem;
+                line-height: 1.6;
+                margin: 0;
+            ">AI-powered health suggestions tailored to your temperament (Mizaj) and health needs.</p>
+        </div>
+
+        <!-- Feature 3: Mizaj Analysis -->
+        <div style="
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        " 
+        onmouseover="this.style.transform='translateY(-8px)'; this.style.boxShadow='0 12px 40px rgba(0,0,0,0.1)'" 
+        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 32px rgba(0,0,0,0.05)'">
+            <div style="
+                width: 60px;
+                height: 60px;
+                background: linear-gradient(135deg, #ff914d 0%, #ff6b6b 100%);
+                border-radius: 12px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin-bottom: 1.5rem;
+            ">
+                <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/>
+                </svg>
+            </div>
+            <h3 style="
+                color: #2c786c;
+                font-size: 1.4rem;
+                margin-bottom: 1rem;
+            ">Mizaj Analysis</h3>
+            <p style="
+                color: #5a6f7b;
+                font-size: 1rem;
+                line-height: 1.6;
+                margin: 0;
+            ">Receive a personalized analysis of your temperament to guide your health choices.</p>
+        </div>
+
+        
+
+        <!-- Feature 5: Expert Connection -->
+        <div style="
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        " 
+        onmouseover="this.style.transform='translateY(-8px)'; this.style.boxShadow='0 12px 40px rgba(0,0,0,0.1)'" 
+        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 32px rgba(0,0,0,0.05)'">
+            <div style="
+                width: 60px;
+                height: 60px;
+                background: linear-gradient(135deg, #2196f3 0%, #03a9f4 100%);
+                border-radius: 12px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin-bottom: 1.5rem;
+            ">
+                <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+            </div>
+            <h3 style="
+                color: #2c786c;
+                font-size: 1.4rem;
+                margin-bottom: 1rem;
+            ">Expert Connection</h3>
+            <p style="
+                color: #5a6f7b;
+                font-size: 1rem;
+                line-height: 1.6;
+                margin: 0;
+            ">Direct access to certified Unani practitioners for further consultations and guidance.</p>
+        </div>
+    </div>
+</section>
+    <!-- About Section -->
+   
+    <section id="about" class="about glass" style="
+    padding: 4rem 2rem;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    margin: 2rem auto;
+    max-width: 900px;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+">
+    <h2 style="
+        font-size: 2.5rem;
+        color:rgb(57, 215, 83);
+        margin-bottom: 2rem;
+        font-weight: 700;
+    ">About UnaniAI</h2>
+    
+    <div style="
+        text-align: left;
+        max-width: 800px;
+        margin: 0 auto;
+        line-height: 1.6;
+        font-size: 1.1rem;
+        color: #333;
+    ">
+        <p style="margin-bottom: 1.5rem; color : white;">
+            UnaniAI is an advanced health assistant designed to provide personalized Unani medicine guidance. 
+            With a database of traditional Unani remedies and an intelligent AI model, UnaniAI offers 
+            tailored health solutions, disease management, and preventive care based on centuries-old Unani principles.
+        </p>
+        
+        <div style="margin-bottom: 2rem;">
+            <h3 style="color: #2c786c; font-size: 1.5rem; margin-bottom: 1rem;">Key Features</h3>
+            <ul style="list-style-type: none; padding-left: 0;">
+                <li style="margin-bottom: 1rem; padding-left: 1.5rem; text-indent: -1.5rem;">
+                    <span style="color: #ff7e33; font-weight: bold;">• Unani Expertise:</span> 
+                    <span style = "color:white;"> Advice based on traditional Unani medicine system, focusing on balancing 
+                    the humors (Dam, Balgham, Safra, and Sauda).</span>
+                </li>
+                <li style="margin-bottom: 1rem; padding-left: 1.5rem; text-indent: -1.5rem;">
+                    <span style="color: #ff7e33; font-weight: bold;">• Personalized Responses:</span> 
+                    <span style="color: white;">Tailored responses to health queries, matching symptoms to relevant Unani treatments</span>
+                
+                </li>
+                
+                <li style="margin-bottom: 1rem; padding-left: 1.5rem; text-indent: -1.5rem;">
+                    <span style="color: #ff7e33; font-weight: bold;">• Verified Database:</span> 
+                    <span style = "color:white;">Accurate, research-based responses from a repository of Unani knowledge.</span>
+                </li>
+                
+                <li style="padding-left: 1.5rem; text-indent: -1.5rem;">
+                    <span style="color: #ff7e33; font-weight: bold;">• Continuous Learning:</span> 
+                    <span style = "color:white;">Improves response accuracy by learning from interactions and new findings.</span> 
+                </li>
+            </ul>
+        </div>
+        
+        <div style="margin-bottom: 2rem;">
+            <h3 style="color: #2c786c; font-size: 1.5rem; margin-bottom: 1rem;">Our Mission</h3>
+            <p style = "color:white;">
+                To revolutionize traditional medicine through technology, making Unani healing accessible to everyone. 
+                We provide holistic healthcare solutions rooted in ancient wisdom, powered by AI-driven efficiency.
+            </p>
+        </div>
+        
+        <div style="margin-bottom: 2rem;">
+            <h3 style="color: #2c786c; font-size: 1.5rem; margin-bottom: 1rem;">How It Works</h3>
+            <p style = "color:white;">
+                UnaniAI combines AI technology with a comprehensive database of Unani remedies to analyze symptoms 
+                and provide real-time, evidence-based responses. Each interaction is personalized to deliver the 
+                best possible advice for your needs.
+            </p>
+        </div>
+        
+        <div>
+            <h3 style="color: #2c786c; font-size: 1.5rem; margin-bottom: 1rem;">Security & Privacy</h3>
+            <p style = "color:white;">
+                Your privacy is our priority. All conversations and health data are securely stored with strict 
+                confidentiality. We're committed to safeguarding your information and maintaining a trustworthy 
+                environment for your health journey.
+            </p>
+        </div>
+    </div>
+</section>
+
+<section id="consult" class="consult glass" style="
+    padding: 4rem 2rem;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(12px);
+    border-radius: 16px;
+    margin: 3rem auto;
+    max-width: 900px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+">
+    <h2 style="
+        font-size: 2.5rem;
+        color: #2c786c;
+        margin-bottom: 1.5rem;
+        font-weight: 700;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    ">Consult UnaniAI</h2>
+    
+    <div style="
+        text-align: center;
+        max-width: 800px;
+        margin: 0 auto 2rem;
+        line-height: 1.7;
+        font-size: 1.1rem;
+        color: #f8f9fa;
+    ">
+        <p style="margin-bottom: 1.5rem;">
+            Do you have any health concerns related to traditional Unani medicine? 
+            You can consult UnaniAI, a state-of-the-art chatbot designed to provide you with 
+            personalized health advice and Unani-based remedies.
+        </p>
+        <p>
+            Whether you have questions about common ailments, herbal treatments, or preventive measures, 
+            UnaniAI is here to assist you with accurate and scientifically-backed information.
+        </p>
+    </div>
+    
+    <button class="consult-btn" onclick="checkSessionStatus(event)" style="
+        padding: 1rem 2.5rem;
+        background: linear-gradient(135deg, #2c786c 0%, #4ca1a3 100%);
+        color: white;
+        border: none;
+        cursor: pointer;
+        font-size: 1.1rem;
+        border-radius: 50px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        box-shadow: 0 4px 15px rgba(44, 120, 108, 0.4);
+        transition: all 0.3s ease;
+        margin-top: 1rem;
+    " 
+    onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(44, 120, 108, 0.6)'" 
+    onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(44, 120, 108, 0.4)'"
+    onclick="checkSessionStatus()">
+        Start Consultation
+    </button>
+</section>
+
+<section id="steps" class="steps" style="
+    padding: 5rem 2rem;
+    text-align: center;
+    background: transparent;
+">
+    <div style="max-width: 1200px; margin: 0 auto;">
+        <h2 style="
+            font-size: 2.5rem;
+            color:rgb(32, 140, 183);
+            margin-bottom: 1rem;
+            font-weight: 700;
+            position: relative;
+            display: inline-block;
+        ">
+            How to Use Your HealthBot
+            <span style="
+                content: '';
+                position: absolute;
+                bottom: -10px;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 80px;
+                height: 3px;
+                background: #ff914d;
+                border-radius: 3px;
+            "></span>
+        </h2>
+        
+        <p style="
+            font-size: 1.2rem;
+            color: #5a6f7b;
+            margin-bottom: 3rem;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+            line-height: 1.6;
+        ">
+            Follow these simple steps to get started with your personalized Unani HealthBot and receive the best advice for your health.
+        </p>
+        
+        <div class="step-container" style="
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            max-width: 1000px;
+            margin: 0 auto;
+            position: relative;
+        ">
+            <!-- Arrow between steps -->
+            <div style="
+                position: absolute;
+                top: 50%;
+                left: 25%;
+                transform: translate(-50%, -50%);
+                width: 40px;
+                height: 10px;
+                display: none;
+            ">
+                <div style="
+                    position: relative;
+                    width: 100%;
+                    height: 100%;
+                ">
+                    <div style="
+                        position: absolute;
+                        top: 50%;
+                        left: 0;
+                        width: 100%;
+                        height: 2px;
+                        background: linear-gradient(90deg, #3aa8c1, #6c63ff);
+                        transform: translateY(-50%);
+                    "></div>
+                    <div style="
+                        position: absolute;
+                        top: 50%;
+                        right: 0;
+                        width: 10px;
+                        height: 10px;
+                        border-top: 2px solid #6c63ff;
+                        border-right: 2px solid #6c63ff;
+                        transform: translateY(-50%) rotate(45deg);
+                    "></div>
+                </div>
+            </div>
+            
+            <!-- Arrow between steps -->
+            <div style="
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                width: 40px;
+                height: 10px;
+                display: none;
+            ">
+                <div style="
+                    position: relative;
+                    width: 100%;
+                    height: 100%;
+                ">
+                    <div style="
+                        position: absolute;
+                        top: 50%;
+                        left: 0;
+                        width: 100%;
+                        height: 2px;
+                        background: linear-gradient(90deg, #6c63ff, #ff914d);
+                        transform: translateY(-50%);
+                    "></div>
+                    <div style="
+                        position: absolute;
+                        top: 50%;
+                        right: 0;
+                        width: 10px;
+                        height: 10px;
+                        border-top: 2px solid #ff914d;
+                        border-right: 2px solid #ff914d;
+                        transform: translateY(-50%) rotate(45deg);
+                    "></div>
+                </div>
+            </div>
+            
+            <!-- Arrow between steps -->
+            <div style="
+                position: absolute;
+                top: 50%;
+                left: 75%;
+                transform: translate(-50%, -50%);
+                width: 40px;
+                height: 10px;
+                display: none;
+            ">
+                <div style="
+                    position: relative;
+                    width: 100%;
+                    height: 100%;
+                ">
+                    <div style="
+                        position: absolute;
+                        top: 50%;
+                        left: 0;
+                        width: 100%;
+                        height: 2px;
+                        background: linear-gradient(90deg, #ff914d, #4caf50);
+                        transform: translateY(-50%);
+                    "></div>
+                    <div style="
+                        position: absolute;
+                        top: 50%;
+                        right: 0;
+                        width: 10px;
+                        height: 10px;
+                        border-top: 2px solid #4caf50;
+                        border-right: 2px solid #4caf50;
+                        transform: translateY(-50%) rotate(45deg);
+                    "></div>
+                </div>
+            </div>
+            
+            <!-- Step 1 -->
+            <div class="step-card" style="
+                background: white;
+                border-radius: 12px;
+                padding: 2rem;
+                box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+                transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                text-align: left;
+                border-top: 4px solid #3aa8c1;
+                transform: translateY(0);
+                position: relative;
+                z-index: 1;
+            " 
+            onmouseover="this.style.transform='translateY(-8px)'; this.style.boxShadow='0 12px 25px rgba(58,168,193,0.15)'" 
+            onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 5px 20px rgba(0,0,0,0.08)'">
+                <div style="
+                    display: flex;
+                    align-items: center;
+                    margin-bottom: 1.5rem;
+                ">
+                    <span style="
+                        background: linear-gradient(135deg, #3aa8c1 0%, #2c8a9e 100%);
+                        color: white;
+                        width: 40px;
+                        height: 40px;
+                        border-radius: 50%;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-size: 1.3rem;
+                        font-weight: bold;
+                        margin-right: 1rem;
+                        box-shadow: 0 4px 8px rgba(58,168,193,0.3);
+                    ">1</span>
+                    <h3 style="
+                        color: #1a4b5e;
+                        font-size: 1.4rem;
+                        margin: 0;
+                    ">Start the Consultation</h3>
+                </div>
+                <p style="
+                    color: #5a6f7b;
+                    font-size: 1rem;
+                    line-height: 1.6;
+                    margin: 0;
+                ">
+                    Click on the "Start chat" or "Start Consultation" button to begin chatting with the HealthBot.
+                </p>
             </div>
 
-            <div class="feature-card glass">
-                <div class="feature-icon">🔮</div>
-                <h3>Personalized Care</h3>
-                <p>AI-powered recommendations based on your unique constitution.</p>
-                <div class="card-glow"></div>
+            <!-- Step 2 -->
+            <div class="step-card" style="
+                background: white;
+                border-radius: 12px;
+                padding: 2rem;
+                box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+                transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                text-align: left;
+                border-top: 4px solid #6c63ff;
+                transform: translateY(0);
+                position: relative;
+                z-index: 1;
+            " 
+            onmouseover="this.style.transform='translateY(-8px)'; this.style.boxShadow='0 12px 25px rgba(108,99,255,0.15)'" 
+            onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 5px 20px rgba(0,0,0,0.08)'">
+                <div style="
+                    display: flex;
+                    align-items: center;
+                    margin-bottom: 1.5rem;
+                ">
+                    <span style="
+                        background: linear-gradient(135deg, #6c63ff 0%, #5a51e6 100%);
+                        color: white;
+                        width: 40px;
+                        height: 40px;
+                        border-radius: 50%;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-size: 1.3rem;
+                        font-weight: bold;
+                        margin-right: 1rem;
+                        box-shadow: 0 4px 8px rgba(108,99,255,0.3);
+                    ">2</span>
+                    <h3 style="
+                        color: #1a4b5e;
+                        font-size: 1.4rem;
+                        margin: 0;
+                    ">Provide Health Details</h3>
+                </div>
+                <p style="
+                    color: #5a6f7b;
+                    font-size: 1rem;
+                    line-height: 1.6;
+                    margin: 0;
+                ">
+                    Input your health concerns, symptoms, or queries. The bot will guide you step-by-step.
+                </p>
             </div>
 
-            <div class="feature-card glass">
-                <div class="feature-icon">⚡</div>
-                <h3>Instant Insights</h3>
-                <p>Get immediate access to centuries of Unani medical knowledge.</p>
-                <div class="card-glow"></div>
+            <!-- Step 3 -->
+            <div class="step-card" style="
+                background: white;
+                border-radius: 12px;
+                padding: 2rem;
+                box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+                transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                text-align: left;
+                border-top: 4px solid #ff914d;
+                transform: translateY(0);
+                position: relative;
+                z-index: 1;
+            " 
+            onmouseover="this.style.transform='translateY(-8px)'; this.style.boxShadow='0 12px 25px rgba(255,145,77,0.15)'" 
+            onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 5px 20px rgba(0,0,0,0.08)'">
+                <div style="
+                    display: flex;
+                    align-items: center;
+                    margin-bottom: 1.5rem;
+                ">
+                    <span style="
+                        background: linear-gradient(135deg, #ff914d 0%, #ff7b3a 100%);
+                        color: white;
+                        width: 40px;
+                        height: 40px;
+                        border-radius: 50%;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-size: 1.3rem;
+                        font-weight: bold;
+                        margin-right: 1rem;
+                        box-shadow: 0 4px 8px rgba(255,145,77,0.3);
+                    ">3</span>
+                    <h3 style="
+                        color: #1a4b5e;
+                        font-size: 1.4rem;
+                        margin: 0;
+                    ">Get Personalized Advice</h3>
+                </div>
+                <p style="
+                    color: #5a6f7b;
+                    font-size: 1rem;
+                    line-height: 1.6;
+                    margin: 0;
+                ">
+                    Receive health advice based on Unani principles tailored to your needs.
+                </p>
             </div>
 
-            <div class="feature-card glass">
-                <div class="feature-icon">🎯</div>
-                <h3>Mizaj Analysis</h3>
-                <p>Advanced AI assessment of your temperament and body constitution.</p>
-                <div class="card-glow"></div>
-            </div>
-
-            <div class="feature-card glass">
-                <div class="feature-icon">🌡️</div>
-                <h3>Symptom Checker</h3>
-                <p>Intelligent analysis of symptoms based on Unani principles.</p>
-                <div class="card-glow"></div>
-            </div>
-
-            <div class="feature-card glass">
-                <div class="feature-icon">📚</div>
-                <h3>Knowledge Base</h3>
-                <p>Extensive library of Unani herbs, treatments, and remedies.</p>
-                <div class="card-glow"></div>
-            </div>
-
-            <div class="feature-card glass">
-                <div class="feature-icon">🔄</div>
-                <h3>Lifestyle Integration</h3>
-                <p>Personalized recommendations for diet, exercise, and daily routines.</p>
-                <div class="card-glow"></div>
-            </div>
-
-            <div class="feature-card glass">
-                <div class="feature-icon">🤝</div>
-                <h3>Expert Connection</h3>
-                <p>Direct access to certified Unani practitioners for consultation.</p>
-                <div class="card-glow"></div>
-            </div>
-
-            <div class="feature-card glass">
-                <div class="feature-icon">📊</div>
-                <h3>Progress Tracking</h3>
-                <p>Monitor your health journey with detailed analytics and insights.</p>
-                <div class="card-glow"></div>
+            <!-- Step 4 -->
+            <div class="step-card" style="
+                background: white;
+                border-radius: 12px;
+                padding: 2rem;
+                box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+                transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                text-align: left;
+                border-top: 4px solid #4caf50;
+                transform: translateY(0);
+                position: relative;
+                z-index: 1;
+            " 
+            onmouseover="this.style.transform='translateY(-8px)'; this.style.boxShadow='0 12px 25px rgba(76,175,80,0.15)'" 
+            onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 5px 20px rgba(0,0,0,0.08)'">
+                <div style="
+                    display: flex;
+                    align-items: center;
+                    margin-bottom: 1.5rem;
+                ">
+                    <span style="
+                        background: linear-gradient(135deg, #4caf50 0%, #3d8b40 100%);
+                        color: white;
+                        width: 40px;
+                        height: 40px;
+                        border-radius: 50%;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-size: 1.3rem;
+                        font-weight: bold;
+                        margin-right: 1rem;
+                        box-shadow: 0 4px 8px rgba(76,175,80,0.3);
+                    ">4</span>
+                    <h3 style="
+                        color: #1a4b5e;
+                        font-size: 1.4rem;
+                        margin: 0;
+                    ">Follow-Up Questions</h3>
+                </div>
+                <p style="
+                    color: #5a6f7b;
+                    font-size: 1rem;
+                    line-height: 1.6;
+                    margin: 0;
+                ">
+                    Ask any follow-up questions for more details. Your HealthBot is here to help!
+                </p>
             </div>
         </div>
-    </section>
+    </div>
+</section>
+
+
+
 
     <!-- Footer -->
-    <footer class="glass-footer">
-        <div class="footer-content">
-            <div class="footer-section">
-                <div class="footer-logo">
-                    <span class="neon-text">Unani</span>AI
-                </div>
-                <p>Ancient wisdom meets modern technology</p>
+    <footer id= "footer" style="
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(12px);
+    padding: 3rem 2rem 1rem;
+    color: #f0f0f0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+">
+    <div style="
+        max-width: 1200px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 2rem;
+        padding-bottom: 2rem;
+    ">
+        <!-- Logo Section -->
+        <div style="margin-bottom: 1.5rem;">
+            <div style="
+                font-size: 2rem;
+                font-weight: 700;
+                margin-bottom: 1rem;
+                background: linear-gradient(90deg, #3aa8c1 0%,rgb(53, 238, 87) 100%);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                display: inline-block;
+            ">
+                <span style="text-shadow: 0 0 8px rgba(32, 227, 29, 0.4);">Unani</span>AI
             </div>
-            
-            <div class="footer-section">
-                <h4>Quick Links</h4>
-                <a href="#">Home</a>
-                <a href="#">About</a>
-                <a href="#">Consult</a>
-                <a href="#">Privacy Policy</a>
-            </div>
-            
-            <div class="footer-section">
-                <h4>Contact</h4>
-                <a href="#">Support</a>
-                <a href="#">Appointments</a>
-                <a href="#">Feedback</a>
-            </div>
-            
-            <div class="footer-section">
-                <h4>Follow Us</h4>
-                <div class="social-links">
-                    <a href="#" class="social-link">Twitter</a>
-                    <a href="#" class="social-link">LinkedIn</a>
-                    <a href="#" class="social-link">Instagram</a>
-                </div>
+            <p style="
+                color: rgba(255, 255, 255, 0.7);
+                font-size: 0.95rem;
+                line-height: 1.6;
+            ">
+                Ancient wisdom meets modern technology
+            </p>
+        </div>
+        
+        <!-- Quick Links -->
+        <div style="margin-bottom: 1.5rem;">
+            <h4 style="
+                color: white;
+                font-size: 1.2rem;
+                margin-bottom: 1.5rem;
+                position: relative;
+                padding-bottom: 0.5rem;
+            ">
+                Quick Links
+                <span style="
+                    content: '';
+                    position: absolute;
+                    bottom: 0;
+                    left: 0;
+                    width: 40px;
+                    height: 2px;
+                    background: linear-gradient(90deg, #3aa8c1, #6c63ff);
+                "></span>
+            </h4>
+            <div style="display: flex; flex-direction: column; gap: 0.8rem;">
+                <a href="#" style="
+                    color: rgba(255, 255, 255, 0.7);
+                    text-decoration: none;
+                    transition: all 0.3s ease;
+                    font-size: 0.95rem;
+                " 
+                onmouseover="this.style.color='#3aa8c1'; this.style.paddingLeft='5px'" 
+                onmouseout="this.style.color='rgba(255, 255, 255, 0.7)'; this.style.paddingLeft='0'">Home</a>
+                <a href="#about" style="
+                    color: rgba(255, 255, 255, 0.7);
+                    text-decoration: none;
+                    transition: all 0.3s ease;
+                    font-size: 0.95rem;
+                " 
+                onmouseover="this.style.color='#3aa8c1'; this.style.paddingLeft='5px'" 
+                onmouseout="this.style.color='rgba(255, 255, 255, 0.7)'; this.style.paddingLeft='0'">About</a>
+                <a href="#consult" style="
+                    color: rgba(255, 255, 255, 0.7);
+                    text-decoration: none;
+                    transition: all 0.3s ease;
+                    font-size: 0.95rem;
+                " 
+                onmouseover="this.style.color='#3aa8c1'; this.style.paddingLeft='5px'" 
+                onmouseout="this.style.color='rgba(255, 255, 255, 0.7)'; this.style.paddingLeft='0'">Consult</a>
+                <a href="#steps" style="
+                    color: rgba(255, 255, 255, 0.7);
+                    text-decoration: none;
+                    transition: all 0.3s ease;
+                    font-size: 0.95rem;
+                " 
+                onmouseover="this.style.color='#3aa8c1'; this.style.paddingLeft='5px'" 
+                onmouseout="this.style.color='rgba(255, 255, 255, 0.7)'; this.style.paddingLeft='0'">Steps</a>
             </div>
         </div>
-        <div class="footer-bottom">
-            <p>&copy; 2024 UnaniAI. All rights reserved.</p>
+        
+        <!-- Contact -->
+        <div style="margin-bottom: 1.5rem;">
+            <h4 style="
+                color: white;
+                font-size: 1.2rem;
+                margin-bottom: 1.5rem;
+                position: relative;
+                padding-bottom: 0.5rem;
+            ">
+                Contact
+                <span style="
+                    content: '';
+                    position: absolute;
+                    bottom: 0;
+                    left: 0;
+                    width: 40px;
+                    height: 2px;
+                    background: linear-gradient(90deg, #ff914d, #ff6b6b);
+                "></span>
+            </h4>
+            <div style="display: flex; flex-direction: column; gap: 0.8rem;">
+                <a href="#" style="
+                    color: rgba(255, 255, 255, 0.7);
+                    text-decoration: none;
+                    transition: all 0.3s ease;
+                    font-size: 0.95rem;
+                " 
+                onmouseover="this.style.color='#ff914d'; this.style.paddingLeft='5px'" 
+                onmouseout="this.style.color='rgba(255, 255, 255, 0.7)'; this.style.paddingLeft='0'">Support</a>
+                <a href="#" style="
+                    color: rgba(255, 255, 255, 0.7);
+                    text-decoration: none;
+                    transition: all 0.3s ease;
+                    font-size: 0.95rem;
+                " 
+                onmouseover="this.style.color='#ff914d'; this.style.paddingLeft='5px'" 
+                onmouseout="this.style.color='rgba(255, 255, 255, 0.7)'; this.style.paddingLeft='0'">Appointments</a>
+                <a href="#" style="
+                    color: rgba(255, 255, 255, 0.7);
+                    text-decoration: none;
+                    transition: all 0.3s ease;
+                    font-size: 0.95rem;
+                " 
+                onmouseover="this.style.color='#ff914d'; this.style.paddingLeft='5px'" 
+                onmouseout="this.style.color='rgba(255, 255, 255, 0.7)'; this.style.paddingLeft='0'">Feedback</a>
+            </div>
         </div>
-    </footer>
+        
+        <!-- Social Links -->
+        <div style="margin-bottom: 1.5rem;">
+            <h4 style="
+                color: white;
+                font-size: 1.2rem;
+                margin-bottom: 1.5rem;
+                position: relative;
+                padding-bottom: 0.5rem;
+            ">
+                Follow Us
+                <span style="
+                    content: '';
+                    position: absolute;
+                    bottom: 0;
+                    left: 0;
+                    width: 40px;
+                    height: 2px;
+                    background: linear-gradient(90deg, #6c63ff, #b063ff);
+                "></span>
+            </h4>
+            <div style="display: flex; flex-direction: column; gap: 0.8rem;">
+                <a href="#" style="
+                    color: rgba(255, 255, 255, 0.7);
+                    text-decoration: none;
+                    transition: all 0.3s ease;
+                    font-size: 0.95rem;
+                    display: flex;
+                    align-items: center;
+                    gap: 0.5rem;
+                " 
+                onmouseover="this.style.color='#6c63ff'; this.style.paddingLeft='5px'" 
+                onmouseout="this.style.color='rgba(255, 255, 255, 0.7)'; this.style.paddingLeft='0'">
+                    <span style="display: inline-block; width: 6px; height: 6px; background: #6c63ff; border-radius: 50%;"></span>
+                    Twitter
+                </a>
+                <a href="#" style="
+                    color: rgba(255, 255, 255, 0.7);
+                    text-decoration: none;
+                    transition: all 0.3s ease;
+                    font-size: 0.95rem;
+                    display: flex;
+                    align-items: center;
+                    gap: 0.5rem;
+                " 
+                onmouseover="this.style.color='#6c63ff'; this.style.paddingLeft='5px'" 
+                onmouseout="this.style.color='rgba(255, 255, 255, 0.7)'; this.style.paddingLeft='0'">
+                    <span style="display: inline-block; width: 6px; height: 6px; background: #6c63ff; border-radius: 50%;"></span>
+                    LinkedIn
+                </a>
+                <a href="#" style="
+                    color: rgba(255, 255, 255, 0.7);
+                    text-decoration: none;
+                    transition: all 0.3s ease;
+                    font-size: 0.95rem;
+                    display: flex;
+                    align-items: center;
+                    gap: 0.5rem;
+                " 
+                onmouseover="this.style.color='#6c63ff'; this.style.paddingLeft='5px'" 
+                onmouseout="this.style.color='rgba(255, 255, 255, 0.7)'; this.style.paddingLeft='0'">
+                    <span style="display: inline-block; width: 6px; height: 6px; background: #6c63ff; border-radius: 50%;"></span>
+                    Instagram
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Copyright -->
+    <div style="
+        max-width: 1200px;
+        margin: 0 auto;
+        padding-top: 2rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        text-align: center;
+    ">
+        <p style="
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 0.85rem;
+            margin: 0;
+        ">
+            &copy; 2025 UnaniAI. All rights reserved.
+        </p>
+    </div>
+</footer>
     <script>
         function checkSessionStatus(event) {
             event.preventDefault();
