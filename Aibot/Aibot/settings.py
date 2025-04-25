@@ -50,6 +50,12 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False  # Browser band hone pe session expire NA ho
+SESSION_COOKIE_AGE = 60 * 60 * 24 * 365  # 1 saal = seconds (optional: jitna chaho rakh sakti ho)
+SESSION_SAVE_EVERY_REQUEST = True        # Har request pe session renew ho
+
+
+
 ROOT_URLCONF = 'Aibot.urls'
 
 TEMPLATES = [
@@ -117,6 +123,8 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 STATIC_URL = 'static/'
+
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
