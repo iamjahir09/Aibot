@@ -12,6 +12,7 @@ urlpatterns = [
     path('get_conversation_history/', views.get_conversation_history, name='get_conversation_history'),
     path('check-login-status/', views.check_login_status, name='check_login_status'),
     path('check-session/', views.check_session, name='check_session'),
+    path('get_chat_history/', views.get_chat_history, name='get_chat_history'),
 
 
 ]

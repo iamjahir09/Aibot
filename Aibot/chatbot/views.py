@@ -223,7 +223,9 @@ def chat(request):
             }
 
             if user_message in greetings_responses:
-                return JsonResponse({"response": greetings_responses[user_message]})
+                bot_response = greetings_responses[user_message]
+                store_conversation(request, user_message, bot_response)
+                return JsonResponse({"response": bot_response})
 
             # Identity questions
             identity_patterns = [
@@ -233,8 +235,13 @@ def chat(request):
                 r"introduce yourself"
             ]
             if any(re.search(pattern, user_message) for pattern in identity_patterns):
-                return JsonResponse({"response": "I am Unani-doctor, a specialized assistant in Unani and traditional Tibb medicine."})
+                bot_response = "I am Unani-doctor, a specialized assistant in Unani and traditional Tibb medicine."
+                store_conversation(request, user_message, bot_response)
+                return JsonResponse({"response": bot_response})
 
+            # Initialize response variable
+            bot_response = None
+            
             # Step 1: Match user message with known diseases dynamically
             conn = sqlite3.connect("user_details.db")
             cursor = conn.cursor()
@@ -243,15 +250,16 @@ def chat(request):
 
             matched_response = None
             for disease, response in rows:
-                # Look for the disease name in the user message (case insensitive)
                 pattern = r'\b' + re.escape(disease.lower()) + r'\b'
                 if re.search(pattern, user_message):
                     matched_response = response
                     break
 
             if matched_response:
+                bot_response = matched_response
+                store_conversation(request, user_message, bot_response)
                 conn.close()
-                return JsonResponse({"response": matched_response})
+                return JsonResponse({"response": bot_response})
 
             # Step 2: No match found, call Ollama model
             enhanced_message = Unani_doctor_INSTRUCTION + user_message
@@ -262,34 +270,22 @@ def chat(request):
             }
 
             api_response = requests.post(f"{OLLAMA_API_URL}/api/generate", json=ollama_payload)
-            
+
             if api_response.status_code == 200:
                 result = api_response.json()
-                model_response = result.get("response", "No response from model")
+                bot_response = result.get("response", "No response from model")
                 
                 # Store conversation in database
-                conn = sqlite3.connect('user_details.db')
-                cursor = conn.cursor()
+                store_conversation(request, user_message, bot_response)
                 
-                # Get user_id from session (if exists)
-                user_id = request.session.get('user_id', None)
-                
-                cursor.execute("""
-                    INSERT INTO conversations (user_id, message, response, timestamp)
-                    VALUES (?, ?, ?, ?)
-                """, (user_id, user_message, model_response, datetime.now()))
-                
-                # Extract disease name from the model response
+                # Extract and cache disease response if applicable
                 disease_name = None
-                if "Addressing" in model_response and "with Unani" in model_response:
-                    # Extract disease name from the response format "Addressing [Condition] with Unani"
-                    start = model_response.find("Addressing") + len("Addressing")
-                    end = model_response.find("with Unani")
-                    disease_name = model_response[start:end].strip()
+                if "Addressing" in bot_response and "with Unani" in bot_response:
+                    start = bot_response.find("Addressing") + len("Addressing")
+                    end = bot_response.find("with Unani")
+                    disease_name = bot_response[start:end].strip()
                 
-                # If not found in response, try to extract from user message
                 if not disease_name:
-                    # Simple pattern to extract potential disease names
                     patterns = [
                         r'i have ([\w\s]+)',
                         r'i\'ve got ([\w\s]+)',
@@ -299,33 +295,33 @@ def chat(request):
                         r'treat ([\w\s]+)',
                         r'cure for ([\w\s]+)'
                     ]
-                    
                     for pattern in patterns:
                         match = re.search(pattern, user_message, re.IGNORECASE)
                         if match:
                             disease_name = match.group(1).strip()
                             break
                 
-                # If we found a disease name, store it in unani_responses
                 if disease_name:
                     try:
                         cursor.execute("""
                             INSERT OR REPLACE INTO unani_responses (disease, response) 
                             VALUES (?, ?)
-                        """, (disease_name, model_response))
-                    except Exception as err:
-                        print("Error while caching model response:", err)
+                        """, (disease_name, bot_response))
+                        conn.commit()
+                    except Exception as e:
+                        print(f"Error caching disease response: {e}")
                 
-                conn.commit()
                 conn.close()
-                return JsonResponse({"response": model_response})
+                return JsonResponse({"response": bot_response})
             
             else:
+                conn.close()
                 return JsonResponse({"error": f"Ollama API error: {api_response.status_code}"}, status=500)
 
         except Exception as e:
             print(f"Error in chat endpoint: {str(e)}")
             return JsonResponse({"error": str(e)}, status=500)
+    
     return JsonResponse({"error": "Invalid request method"}, status=405)
 def get_user_id_from_email(email):
     """
@@ -345,44 +341,128 @@ def get_user_id_from_email(email):
         raise ValueError("User not found")
 
 def store_conversation(request, user_message, bot_response):
-    email = request.session.get('email')  # Fetch user email from session
-    if not email:
-        raise ValueError("User email not found in session")
+    try:
+        email = request.session.get('email')
+        if not email:
+            print("Warning: User email not found in session")
+            return False
+        
+        # Fetch user ID using email
+        user_id = get_user_id_from_email(email)
+        if not user_id:
+            print(f"Warning: No user found with email: {email}")
+            return False
+        
+        conn = None
+        try:
+            conn = sqlite3.connect('user_details.db')
+            cursor = conn.cursor()
+            
+            # Enable foreign key constraints
+            cursor.execute("PRAGMA foreign_keys = ON")
+            
+            # Insert conversation
+            cursor.execute(""" 
+                INSERT INTO conversations (user_id, message, response, timestamp)
+                VALUES (?, ?, ?, ?)
+            """, (user_id, user_message, bot_response, datetime.now()))
+            
+            conn.commit()
+            return True
+            
+        except sqlite3.Error as e:
+            print(f"Database error in store_conversation: {str(e)}")
+            return False
+            
+        finally:
+            if conn:
+                conn.close()
+                
+    except Exception as e:
+        print(f"General error in store_conversation: {str(e)}")
+        return False
+
+
+@csrf_exempt
+def get_chat_history(request):
+    if request.method == 'GET':
+        try:
+            user_id = request.session.get('user_id')
+            if not user_id:
+                return JsonResponse({'error': 'User not authenticated'}, status=401)
+            
+            conn = sqlite3.connect('user_details.db')
+            cursor = conn.cursor()
+            
+            cursor.execute("""
+                SELECT message, response, timestamp 
+                FROM conversations 
+                WHERE user_id = ? 
+                ORDER BY timestamp DESC
+                LIMIT 50
+            """, (user_id,))
+            
+            def format_response(response):
+                # Check if response contains a table pattern
+                if "| Ingredient | Benefits | Usage | Precautions |" in response:
+                    # Extract the table part
+                    table_start = response.find("| Ingredient | Benefits | Usage | Precautions |")
+                    table_end = response.find("\n\n", table_start)
+                    table_content = response[table_start:table_end]
+                    
+                    # Convert markdown table to HTML table with CSS
+                    table_html = """
+                    <div class="unani-table-container">
+                        <table class="unani-table">
+                            <thead>
+                                <tr>
+                                    <th>Ingredient</th>
+                                    <th>Benefits</th>
+                                    <th>Usage</th>
+                                    <th>Precautions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    """
+                    
+                    # Process table rows
+                    rows = [row.strip() for row in table_content.split('\n') if row.strip()]
+                    for row in rows[2:]:  # Skip header and separator lines
+                        if row.startswith('|'):
+                            cells = [cell.strip() for cell in row.split('|')[1:-1]]
+                            if len(cells) == 4:
+                                table_html += f"""
+                                <tr>
+                                    <td>{cells[0]}</td>
+                                    <td>{cells[1]}</td>
+                                    <td>{cells[2]}</td>
+                                    <td>{cells[3]}</td>
+                                </tr>
+                                """
+                    
+                    table_html += """
+                            </tbody>
+                        </table>
+                    </div>
+                    """
+                    
+                    # Replace markdown table with HTML table in response
+                    return response[:table_start] + table_html + response[table_end:]
+                return response
+            
+            history = [{
+                'message': row[0],
+                'response': format_response(row[1]),
+                'timestamp': row[2]
+            } for row in cursor.fetchall()]
+            
+            conn.close()
+            return JsonResponse({'history': history})
+            
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
     
-    # Fetch user ID using email
-    user_id = get_user_id_from_email(email)
-    
-    conn = sqlite3.connect('user_details.db')
-    cursor = conn.cursor()
-
-    cursor.execute("PRAGMA foreign_keys = ON")
-
-    cursor.execute(""" 
-        INSERT INTO conversations (user_id, message, response, timestamp)
-        VALUES (?, ?, ?, ?)
-    """, (user_id, user_message, bot_response, datetime.now()))
-
-    conn.commit()
-    conn.close()
-
-def get_user_conversations(user_id):
-    conn = sqlite3.connect('user_details.db')
-    cursor = conn.cursor()
-
-    cursor.execute("""
-        SELECT message, response, timestamp
-        FROM conversations
-        WHERE user_id = ?
-        ORDER BY timestamp ASC
-    """, (user_id,))
-    
-    chats = cursor.fetchall()
-    conn.close()
-    return chats
-
-
-
-
+    return JsonResponse({'error': 'Invalid request method'}, status=405)
 
 Unani_doctor_INSTRUCTION = """
 You are Unani-doctor, a specialized assistant in Unani medicine. Respond to each query within **1 minute**.
@@ -512,6 +592,8 @@ def login(request):
 
             if user:
                 request.session['user_id'] = user[0]
+                request.session['email'] = email
+
                 request.session.set_expiry(60 * 60 * 24 * 365)  # 1 saal tak login
                 return redirect('index')
             else:

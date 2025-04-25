@@ -12,6 +12,94 @@
     <!-- Add FontAwesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+
+        .history-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+        
+        .history-content {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            width: 80%;
+            max-width: 800px;
+            max-height: 80vh;
+            padding: 20px;
+            overflow-y: auto;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .history-header h2 {
+            color: #3aa8c1;
+            margin: 0;
+        }
+        
+        .close-history-btn {
+            background: transparent;
+            border: none;
+            color: white;
+            cursor: pointer;
+            padding: 8px 15px;
+            border-radius: 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .history-message {
+            display: flex;
+            margin-bottom: 15px;
+            gap: 10px;
+        }
+        
+        .history-message .message-content {
+            padding: 10px 15px;
+            border-radius: 18px;
+            max-width: 70%;
+        }
+        
+        .user-message {
+            justify-content: flex-end;
+        }
+        
+        .user-message .message-content {
+            background: rgba(58, 168, 193, 0.2);
+            border-bottom-right-radius: 5px;
+        }
+        
+        .ai-message .message-content {
+            background: rgba(255, 255, 255, 0.1);
+            border-bottom-left-radius: 5px;
+        }
+        
+        .history-message small {
+            display: block;
+            font-size: 0.8em;
+            color: rgba(255, 255, 255, 0.6);
+            margin-top: 5px;
+            text-align: right;
+        }
+        
+        .no-history {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.7);
+            padding: 20px;
+        }
         /* Add this CSS for the table */
         table {
             width: 100%;
@@ -1454,6 +1542,9 @@
                             <div class="message-header">
                                 <span class="sender">UnaniAI</span>
                 </div>
+                <div class="avatar-circle">
+                    <div class="avatar-inner"></div>
+                </div>
                             <p>Welcome to UnaniAI! I'm your personal Tib medicine assistant. How can I help you today with natural healing solutions?</p>
                         </div>
                     </div>
@@ -1531,7 +1622,7 @@
     <div class="history-content">
         <div class="history-header">
             <h2>Chat History</h2>
-            <button class="close-history-btn glass" onclick="toggleHistory()">
+            <button class="close-history-btn glass" onclick="toggleHistory()" style="padding: 10px 20px; background-color:rgb(26, 155, 89); color: white; border: none; border-radius: 5px; cursor: pointer;">
                 <span>Close</span>
                 <div class="btn-glow"></div>
             </button>
@@ -1682,6 +1773,107 @@
     
 
     <script>
+
+        // Function to toggle history window
+        function toggleSidebar() {
+            const sidebar = document.getElementById("sidebar");
+            const menuBtn = document.querySelector(".menu-btn");
+            const backdrop = document.getElementById("sidebar-backdrop");
+        
+            // Toggle sidebar visibility
+            sidebar.classList.toggle("open");
+        
+            // Toggle menu button visibility
+            menuBtn.classList.toggle("hide");
+        
+            // Toggle backdrop visibility
+            backdrop.classList.toggle("active");
+        
+            // Ensure the history window is closed when toggling the sidebar
+            const historyWindow = document.getElementById('historyWindow');
+            if (historyWindow.style.display === 'block') {
+                historyWindow.style.display = 'none';
+            }
+        }
+        
+        function toggleHistory() {
+            const historyWindow = document.getElementById('historyWindow');
+            const sidebar = document.getElementById('sidebar');
+            const backdrop = document.getElementById('sidebar-backdrop');
+        
+            if (historyWindow.style.display === 'block') {
+                // Hide history window
+                historyWindow.style.display = 'none';
+                
+                // Restore sidebar if it was hidden
+                sidebar.style.transform = 'translateX(0)';
+                backdrop.style.display = 'block';
+            } else {
+                // Show history window
+                historyWindow.style.display = 'block';
+        
+                // Hide sidebar when opening history
+                sidebar.style.transform = 'translateX(-100%)';
+                
+                // Hide backdrop when history is open
+                backdrop.style.display = 'none';
+                
+                // Optionally, load the chat history
+                loadChatHistory();
+            }
+        }
+        
+        // Function to load chat history from server
+        function loadChatHistory() {
+            fetch('/get_chat_history/')
+                .then(response => response.json())
+                .then(data => {
+                    const historyBody = document.querySelector('.history-body');
+                    historyBody.innerHTML = '';
+                    
+                    if (data.history && data.history.length > 0) {
+                        data.history.forEach(chat => {
+                            const chatDiv = document.createElement('div');
+                            chatDiv.className = 'history-chat';
+                            
+                            // User message
+                            const userMsg = document.createElement('div');
+                            userMsg.className = 'history-message user-message';
+                            userMsg.innerHTML = `
+                                <div class="message-avatar">You</div>
+                                <div class="message-content glass">
+                                    <p>${chat.message}</p>
+                                    <small>${new Date(chat.timestamp).toLocaleString()}</small>
+                                </div>
+                            `;
+                            
+                            // AI response
+                            const aiMsg = document.createElement('div');
+                            aiMsg.className = 'history-message ai-message';
+                            aiMsg.innerHTML = `
+                                <div class="message-avatar">
+                                    <div class="avatar-circle">
+                                        <div class="avatar-inner"></div>
+                                    </div>
+                                </div>
+                                <div class="message-content glass">
+                                    <p>${chat.response}</p>
+                                    <small>${new Date(chat.timestamp).toLocaleString()}</small>
+                                </div>
+                            `;
+                            
+                            chatDiv.appendChild(userMsg);
+                            chatDiv.appendChild(aiMsg);
+                            historyBody.appendChild(chatDiv);
+                        });
+                    } else {
+                        historyBody.innerHTML = '<p class="no-history">No chat history available</p>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading chat history:', error);
+                });
+        }
         // Auto-resizing textarea
         document.querySelector(".chat-input").addEventListener("input", function() {
             this.style.height = "auto";
@@ -1806,15 +1998,30 @@
                 // Create AI avatar with circle
                 const avatarCircle = document.createElement("div");
                 avatarCircle.classList.add("avatar-circle");
-                
+            
                 const avatarInner = document.createElement("div");
                 avatarInner.classList.add("avatar-inner");
-                
+            
+                // Set "U" inside the AI's avatar circle
+                avatarInner.innerText = "U";
+            
                 avatarCircle.appendChild(avatarInner);
                 avatarDiv.appendChild(avatarCircle);
             } else {
-                avatarDiv.innerText = "You";
+                // For user's avatar, set "YOU"
+                const avatarCircle = document.createElement("div");
+                avatarCircle.classList.add("avatar-circle");
+            
+                const avatarInner = document.createElement("div");
+                avatarInner.classList.add("avatar-inner");
+            
+                // Set "YOU" inside the user's avatar circle
+                avatarInner.innerText = "YOU";
+            
+                avatarCircle.appendChild(avatarInner);
+                avatarDiv.appendChild(avatarCircle);
             }
+            
         
             // Create message content
             const contentDiv = document.createElement("div");
@@ -1958,33 +2165,8 @@
         }
 
         // Function to toggle sidebar
-        function toggleSidebar() {
-            const sidebar = document.getElementById("sidebar");
-            const menuBtn = document.querySelector(".menu-btn");
-            const backdrop = document.getElementById("sidebar-backdrop");
-            sidebar.classList.toggle("open");
-            menuBtn.classList.toggle("hide"); // Hide/show menu button
-            backdrop.classList.toggle("active"); // Toggle backdrop
-        }
-
-        // Function to toggle the visibility of the chat history window
-function toggleHistory() {
-    const historyWindow = document.getElementById('historyWindow');
-    historyWindow.style.display = (historyWindow.style.display === 'none' || historyWindow.style.display === '') ? 'block' : 'none';
-}
-
-
-        // Function to toggle history window
         
-            // Function to toggle the chat history modal
-function toggleHistory() {
-    const modal = document.getElementById('history-modal');
-    modal.style.display = (modal.style.display === "block") ? "none" : "block"; // Toggle display
-
-    if (modal.style.display === "block") {
-        fetchChatHistory(); // Fetch chat history when modal opens
-    }
-}
+        // Function to toggle the visibility of the chat history window
 
 // Function to fetch and display the chat history
 {% comment %} function fetchChatHistory() {
@@ -2013,28 +2195,7 @@ function toggleHistory() {
 } {% endcomment %}
 
 // Function to show full conversation for a disease
-function showConversationHistory(disease) {
-    fetch(`/get-conversation-history/${disease}`)
-        .then(response => response.json())
-        .then(data => {
-            const historyBody = document.querySelector('.history-body');
-            historyBody.innerHTML = ''; // Clear previous content
 
-            if (data.conversation && data.conversation.length > 0) {
-                data.conversation.forEach(convo => {
-                    const convoElement = document.createElement('div');
-                    convoElement.classList.add('conversation-item');
-                    convoElement.innerHTML = `<strong>User:</strong> ${convo.message} <br><strong>Response:</strong> ${convo.response}`;
-                    historyBody.appendChild(convoElement);
-                });
-            } else {
-                historyBody.innerHTML = '<p>No conversation found for this disease.</p>';
-            }
-        })
-        .catch(error => {
-            console.error('Error fetching conversation history:', error);
-        });
-}
 
         // Function to handle logout
         function logout() {
@@ -2138,6 +2299,14 @@ function showConversationHistory(disease) {
                 avatar.style.border = '1px solid rgba(102, 217, 232, 0.2)';
             });
         }
+
+        const aiAvatars = document.querySelectorAll('.ai-message .message-avatar');
+aiAvatars.forEach(avatar => {
+    avatar.style.backgroundColor = 'rgba(18, 37, 47, 0.9)'; // Darker background for AI
+    avatar.style.color = '#f1c40f'; // Yellow color for AI text
+    avatar.style.border = '1px solid rgba(241, 196, 15, 0.2)'; // Lighter yellow border
+});
+
         
         // Run on page load
         document.addEventListener('DOMContentLoaded', fixUserMessageStyles);

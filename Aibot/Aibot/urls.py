@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.urls import path
-from chatbot.views import home, chat,index,signup,check_session,login,logout_view,check_login_status,chatbot_response,get_conversation_history # <-- yeh zaruri hai
+from chatbot.views import home, chat,index,signup,get_chat_history,check_session,login,logout_view,check_login_status,chatbot_response,get_conversation_history # <-- yeh zaruri hai
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -14,6 +14,7 @@ urlpatterns = [
     path('get_conversation_history', get_conversation_history, name='get_conversation_history'),
     path('check-login-status/', check_login_status, name='check_login_status'),
     path('check-session/', check_session, name='check_session'),
+    path('get_chat_history/', get_chat_history, name='get_chat_history'),
 
 
 ]
