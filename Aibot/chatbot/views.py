@@ -90,116 +90,6 @@ def create_database():
 
 create_database()
 
-# @csrf_exempt
-# def chat(request):
-#     if request.method == 'POST':
-#         try:
-#             data = json.loads(request.body)
-#             user_message = data.get('message', '').lower().strip()
-#             model = data.get('model', DEFAULT_MODEL)
-
-#             # Greeting responses
-#             greetings_responses = {
-#                 "hi": "Hi there! How can I assist you today?",
-#                 "hello": "Hello! How can I help you?",
-#                 "hey": "Hey! What can I do for you?",
-#                 "greetings": "Greetings! What brings you here today?",
-#                 "good morning": "Good morning! Hope you're feeling well.",
-#                 "good afternoon": "Good afternoon! How can I help you?",
-#                 "good evening": "Good evening! What can I do for you?",
-#                 "salam": "Wa alaikum assalam! How may I assist you today?",
-#                 "assalamualaikum": "Wa alaikum assalam! How may I help you?",
-#                 "assalamu alaikum": "Wa alaikum assalam! How can I assist you today?"
-#             }
-
-#             if user_message in greetings_responses:
-#                 return JsonResponse({"response": greetings_responses[user_message]})
-
-#             # Identity questions
-#             identity_patterns = [
-#                 r"who are you",
-#                 r"what are you", 
-#                 r"what is your name", 
-#                 r"introduce yourself"
-#             ]
-#             if any(re.search(pattern, user_message) for pattern in identity_patterns):
-#                 return JsonResponse({"response": "I am Unani-doctor, a specialized assistant in Unani and traditional Tibb medicine."})
-
-#             # Step 1: Match user message with known diseases dynamically
-#             conn = sqlite3.connect("user_details.db")
-#             cursor = conn.cursor()
-#             cursor.execute("SELECT disease, response FROM unani_responses")
-#             rows = cursor.fetchall()
-
-#             matched_response = None
-#             for disease, response in rows:
-#                 # Look for the disease name in the user message (case insensitive)
-#                 pattern = r'\b' + re.escape(disease.lower()) + r'\b'
-#                 if re.search(pattern, user_message):
-#                     matched_response = response
-#                     break
-
-#             if matched_response:
-#                 conn.close()
-#                 return JsonResponse({"response": matched_response})
-
-#             # Step 2: No match found, call Ollama model
-#             enhanced_message = Unani_doctor_INSTRUCTION + user_message
-#             ollama_payload = {
-#                 "model": model,
-#                 "prompt": enhanced_message,
-#                 "stream": False
-#             }
-
-#             response = requests.post(f"{OLLAMA_API_URL}/api/generate", json=ollama_payload)
-
-#             conn = sqlite3.connect('user_details.db')
-#             cursor = conn.cursor()
-            
-#             # Get user_id from session (if exists)
-#             user_id = request.session.get('user_id', None)
-            
-#             cursor.execute("""
-#                 INSERT INTO conversations (user_id, message, response, timestamp)
-#                 VALUES (?, ?, ?, ?)
-#             """, (user_id, user_message, response, datetime.now()))
-            
-#             conn.commit()
-#             conn.close()
-
-            
-#             if response.status_code == 200:
-#                 result = response.json()
-#                 model_response = result.get("response", "No response from model")
-
-#                 # Try to extract a disease name from prompt (fallback to full prompt)
-#                 extracted_disease = user_message.split()[0:5]
-#                 possible_disease = " ".join(extracted_disease)
-
-#                 # Store model response in database for future use
-#                 try:
-#                     cursor.execute("INSERT INTO unani_responses (disease, response) VALUES (?, ?)",
-#                                    (possible_disease, model_response))
-#                     conn.commit()
-
-#                     # After inserting, fetch the latest data to update the cache
-#                     cursor.execute("SELECT disease, response FROM unani_responses")
-#                     rows = cursor.fetchall()  # Refresh the database cache
-#                 except Exception as err:
-#                     print("Error while caching model response:", err)
-
-#                 conn.close()
-#                 return JsonResponse({"response": model_response})
-            
-#             else:
-#                 conn.close()
-#                 return JsonResponse({"error": f"Ollama API error: {response.status_code}"}, status=500)
-
-#         except Exception as e:
-#             print(f"Error in chat endpoint: {str(e)}")
-#             return JsonResponse({"error": str(e)}, status=500)
-#     return JsonResponse({"error": "Invalid request method"}, status=405)
-
 @csrf_exempt
 def chat(request):
     if request.method == 'POST':
@@ -241,28 +131,76 @@ def chat(request):
 
             # Initialize response variable
             bot_response = None
-            
+
+            # Function to extract disease name from user message
+            def extract_disease(message):
+                disease_patterns = [
+                    r'(?:i\s*(?:have|am\s*having|ve\s*got)|suffering\s*from|diagnosed\s*with|affected\s*by)\s+([a-z\s]+?)(?:\s*(?:for|since|from|please|now|that|which|\?|\.|$))',
+                    r'(?:treatment|remedy|cure|solution|help)\s+(?:for|with)\s+([a-z\s]+?)(?:\s*(?:please|\?|\.|$))',
+                    r'my\s+([a-z\s]+?)(?:\s*(?:is|has|become|feels|\?|\.|$))',
+                    r'(?:about|information\s*on|details\s*of)\s+([a-z\s]+?)(?:\s*(?:disease|problem|\?|\.|$))',
+                    r'\b(?:having|got)\s+([a-z\s]+?)(?:\s*(?:problem|issue|pain|\?|\.|$))'
+                ]
+                
+                for pattern in disease_patterns:
+                    match = re.search(pattern, message, re.IGNORECASE)
+                    if match:
+                        disease = match.group(1).strip()
+                        disease = re.sub(r'\b(?:please|plz|help|me|my|give|provide|suggest|recommend|tell|about|information|on|for|with|treatment|remedy|cure|solution|disease|problem|issue|pain)\b', '', disease, flags=re.IGNORECASE).strip()
+                        if disease:
+                            return disease
+
+                # Added EXTRA smart extraction for very long messages
+                sentences = re.split(r'[.?!]', message)
+                for sentence in sentences:
+                    for pattern in disease_patterns:
+                        match = re.search(pattern, sentence, re.IGNORECASE)
+                        if match:
+                            disease = match.group(1).strip()
+                            disease = re.sub(r'\b(?:please|plz|help|me|my|give|provide|suggest|recommend|tell|about|information|on|for|with|treatment|remedy|cure|solution|disease|problem|issue|pain)\b', '', disease, flags=re.IGNORECASE).strip()
+                            if disease:
+                                return disease
+
+                if len(message.split()) <= 4 and not any(word in message for word in ['you', 'your', 'who', 'what']):
+                    return message
+                
+                return None
+
+            # Extract disease name from user message
+            disease_name = extract_disease(user_message)
+
             # Step 1: Match user message with known diseases dynamically
             conn = sqlite3.connect("user_details.db")
             cursor = conn.cursor()
-            cursor.execute("SELECT disease, response FROM unani_responses")
-            rows = cursor.fetchall()
 
-            matched_response = None
-            for disease, response in rows:
-                pattern = r'\b' + re.escape(disease.lower()) + r'\b'
-                if re.search(pattern, user_message):
-                    matched_response = response
-                    break
+            if disease_name:
+                cursor.execute("SELECT response FROM unani_responses WHERE disease LIKE ?", (f"%{disease_name}%",))
+                row = cursor.fetchone()
 
-            if matched_response:
-                bot_response = matched_response
-                store_conversation(request, user_message, bot_response)
-                conn.close()
-                return JsonResponse({"response": bot_response})
+                if row:
+                    bot_response = row[0]
+                    store_conversation(request, user_message, bot_response)
+                    conn.close()
+                    return JsonResponse({"response": bot_response})
+
+                cursor.execute("SELECT disease, response FROM unani_responses")
+                rows = cursor.fetchall()
+
+                matched_response = None
+                for db_disease, response in rows:
+                    pattern = r'\b' + re.escape(db_disease.lower()) + r'\b'
+                    if re.search(pattern, disease_name):
+                        matched_response = response
+                        break
+
+                if matched_response:
+                    bot_response = matched_response
+                    store_conversation(request, user_message, bot_response)
+                    conn.close()
+                    return JsonResponse({"response": bot_response})
 
             # Step 2: No match found, call Ollama model
-            enhanced_message = Unani_doctor_INSTRUCTION + user_message
+            enhanced_message = Unani_doctor_INSTRUCTION + (disease_name if disease_name else user_message)
             ollama_payload = {
                 "model": model,
                 "prompt": enhanced_message,
@@ -274,34 +212,10 @@ def chat(request):
             if api_response.status_code == 200:
                 result = api_response.json()
                 bot_response = result.get("response", "No response from model")
-                
-                # Store conversation in database
+
                 store_conversation(request, user_message, bot_response)
-                
-                # Extract and cache disease response if applicable
-                disease_name = None
-                if "Addressing" in bot_response and "with Unani" in bot_response:
-                    start = bot_response.find("Addressing") + len("Addressing")
-                    end = bot_response.find("with Unani")
-                    disease_name = bot_response[start:end].strip()
-                
-                if not disease_name:
-                    patterns = [
-                        r'i have ([\w\s]+)',
-                        r'i\'ve got ([\w\s]+)',
-                        r'suffering from ([\w\s]+)',
-                        r'have ([\w\s]+)',
-                        r'my ([\w\s]+)',
-                        r'treat ([\w\s]+)',
-                        r'cure for ([\w\s]+)'
-                    ]
-                    for pattern in patterns:
-                        match = re.search(pattern, user_message, re.IGNORECASE)
-                        if match:
-                            disease_name = match.group(1).strip()
-                            break
-                
-                if disease_name:
+
+                if disease_name and bot_response:
                     try:
                         cursor.execute("""
                             INSERT OR REPLACE INTO unani_responses (disease, response) 
@@ -310,10 +224,10 @@ def chat(request):
                         conn.commit()
                     except Exception as e:
                         print(f"Error caching disease response: {e}")
-                
+
                 conn.close()
                 return JsonResponse({"response": bot_response})
-            
+
             else:
                 conn.close()
                 return JsonResponse({"error": f"Ollama API error: {api_response.status_code}"}, status=500)
@@ -321,8 +235,9 @@ def chat(request):
         except Exception as e:
             print(f"Error in chat endpoint: {str(e)}")
             return JsonResponse({"error": str(e)}, status=500)
-    
+
     return JsonResponse({"error": "Invalid request method"}, status=405)
+
 def get_user_id_from_email(email):
     """
     Fetch user_id from the users table using the email.
@@ -467,46 +382,51 @@ def get_chat_history(request):
 Unani_doctor_INSTRUCTION = """
 You are Unani-doctor, a specialized assistant in Unani medicine. Respond to each query within **1 minute**.
 
-1. FIRST, validate if the user query contains a real and globally recognized disease name.
+1. LANGUAGE HANDLING:
+   - Automatically detect and respond in the user's language
+   - Maintain all Unani medical terminology accurately
+   - For non-English queries, include botanical names in parentheses
+
+2. FIRST, validate if the user query contains a real and globally recognized disease name.
    - If the disease does NOT exist or is misspelled, REPLY: "Sorry, this disease does not exist. Please recheck the name."
 
-2. If the query is about a specific Unani ingredient (e.g., saffron, haritaki):
+3. If the query is about a specific Unani ingredient (e.g., saffron, haritaki):
    - DO NOT provide a table.
    - Respond with exactly 7 bullet points.
    - Each point should be MAX 2 lines.
    - Include known Unani benefits, traditional uses, and medicinal effects.
    - Avoid false claims or unverified data.
 
-3. If the disease exists, follow this exact structure:
+4. If the disease exists, follow this exact structure:
    - Start with: "Addressing [Condition] with Unani"
    - Provide a BRIEF explanation of the disease based on Unani humoral theory (balgham, dam, safra, sauda).
    - DO NOT explain unrelated diseases or give general health tips.
 
-4. After explanation, present a CLEAR TABLE with the following columns:
+5. After explanation, present a CLEAR TABLE with the following columns:
    Ingredient | Benefits | Usage | Precautions
 
-5. In the table:
+6. In the table:
    - Each ingredient must be a verified Unani remedy relevant to the condition.
    - Include the **common name** of the ingredient in brackets like this: Haritaki (Terminalia chebula)
    - All benefits must be medically and traditionally accurate.
    - Dosage and precautions should be realistic and medically safe.
    - DO NOT mix botanical names (e.g., Haritaki ≠ Belleric Myrobalan)
 
-6. List only 4–5 ingredients MAXIMUM.
-7. DO NOT use mixed, incorrect, or non-existent ingredient mappings.
-8. DO NOT hallucinate information. If unsure, say "Research ongoing".
+7. List only 4–5 ingredients MAXIMUM.
+8. DO NOT use mixed, incorrect, or non-existent ingredient mappings.
+9. DO NOT hallucinate information. If unsure, say "Research ongoing".
 
-9. Finish with the exact sentence: "I hope you find the cure. Take care! "
+10. Finish with the exact sentence: "I hope you find the cure. Take care! "
 
-10. DO NOT answer anything unrelated to diseases or Unani treatment.
+11. DO NOT answer anything unrelated to diseases or Unani treatment.
    - If the user asks something off-topic (e.g., politics, tech, jokes), reply: 
      "I'm your Unani health assistant. I can only help with Unani-based health queries."
 
-11. User Language Detection:
+12. User Language Detection:
     -Respond in the language that the user is using, whether it's Hindi, Marathi, Urdu, Hinglish, Turkish, or any other global language.
     -The response will match the language of the user's sentence, regardless of the script used (e.g., Marathi, Hindi, Urdu, Hinglish).
 
-12. Ingredient Information:
+13. Ingredient Information:
     -If the user asks for details about any ingredient, provide information in bullet points.
     -Limit to 6 points maximum.
     -Each point should be short (max 2 lines per point).
@@ -754,3 +674,153 @@ def is_valid_disease(disease_name):
     conn.close()
     
     return disease is not None
+
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from .voice_utils import UnaniVoiceAssistant
+import io
+import json
+
+@csrf_exempt
+def voice_to_text(request):
+    """API endpoint to convert voice to text"""
+    if request.method == 'POST':
+        try:
+            # Check if audio file was uploaded
+            if 'audio' not in request.FILES:
+                return JsonResponse({
+                    'error': 'No audio file provided',
+                    'status': 'error'
+                }, status=400)
+            
+            # Create in-memory file-like object
+            audio_data = io.BytesIO()
+            
+            # Stream uploaded file directly to memory
+            for chunk in request.FILES['audio'].chunks():
+                audio_data.write(chunk)
+            audio_data.seek(0)  # Rewind to start of stream
+            
+            # Process audio
+            assistant = UnaniVoiceAssistant()
+            recognized_text = assistant.process_audio(audio_data)
+            
+            if recognized_text:
+                return JsonResponse({
+                    'text': recognized_text, 
+                    'status': 'success',
+                    'language': 'hi-IN'
+                })
+            
+            return JsonResponse({
+                'error': 'Could not understand audio', 
+                'status': 'error'
+            }, status=400)
+            
+        except Exception as e:
+            return JsonResponse({
+                'error': str(e),
+                'status': 'error'
+            }, status=500)
+    
+    return JsonResponse({
+        'error': 'Invalid request method', 
+        'status': 'error'
+    }, status=405)
+from django.conf import settings
+from .models import ChatMessage, UploadedFile
+@csrf_exempt
+def handle_file_upload(request):
+    if request.method == 'POST':
+        try:
+            # Ensure upload directory exists
+            os.makedirs(os.path.join(settings.MEDIA_ROOT, 'uploads'), exist_ok=True)
+            
+            if not request.FILES:
+                return JsonResponse({'status': 'error', 'message': 'No files provided'}, status=400)
+
+            files = request.FILES.getlist('files')
+            message_text = request.POST.get('message', '')
+            chat = None
+
+            # Handle message saving
+            if message_text:
+                try:
+                    email = request.session.get('email')
+                    if email:
+                        user_id = get_user_id_from_email(email)  # Ensure this function exists
+                        chat = ChatMessage.objects.create(
+                            user_id=user_id,
+                            message=message_text
+                        )
+                except Exception as e:
+                    print(f"Message save error: {str(e)}")
+
+            # Process files
+            saved_files = []
+            for file in files:
+                try:
+                    uploaded = UploadedFile.objects.create(
+                        file=file,
+                        message=chat
+                    )
+                    saved_files.append({
+                        'name': file.name,
+                        'url': uploaded.file.url,
+                        'size': file.size
+                    })
+                except Exception as e:
+                    print(f"File save error for {file.name}: {str(e)}")
+                    continue
+
+            return JsonResponse({
+                'status': 'success',
+                'files': saved_files,
+                'message': message_text,
+                'message_id': chat.id if chat else None
+            })
+
+        except Exception as e:
+            import traceback
+            traceback.print_exc()  # Log full error to console
+            return JsonResponse({
+                'status': 'error',
+                'message': f"Server error: {str(e)}"
+            }, status=500)
+
+    return JsonResponse({
+        'status': 'error',
+        'message': 'Only POST requests allowed'
+    }, status=405)
+@csrf_exempt
+def text_to_speech(request):
+    """API endpoint to convert text to speech"""
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            text = data.get('text', '')
+            
+            if not text:
+                return JsonResponse({
+                    'error': 'No text provided',
+                    'status': 'error'
+                }, status=400)
+            
+            assistant = UnaniVoiceAssistant()
+            assistant.speak(text)
+            
+            return JsonResponse({
+                'status': 'success',
+                'message': 'Text spoken successfully'
+            })
+            
+        except Exception as e:
+            return JsonResponse({
+                'error': str(e),
+                'status': 'error'
+            }, status=500)
+    
+    return JsonResponse({
+        'error': 'Invalid request method', 
+        'status': 'error'
+    }, status=405)

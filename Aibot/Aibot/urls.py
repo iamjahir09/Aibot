@@ -1,6 +1,8 @@
 from django.contrib import admin
+from django.conf import settings
+from django.conf.urls.static import static
 from django.urls import path
-from chatbot.views import home, chat,index,signup,get_chat_history,check_session,login,logout_view,check_login_status,chatbot_response,get_conversation_history # <-- yeh zaruri hai
+from chatbot.views import home,handle_file_upload,voice_to_text,text_to_speech, chat,index,signup,get_chat_history,check_session,login,logout_view,check_login_status,chatbot_response,get_conversation_history # <-- yeh zaruri hai
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -15,7 +17,10 @@ urlpatterns = [
     path('check-login-status/', check_login_status, name='check_login_status'),
     path('check-session/', check_session, name='check_session'),
     path('get_chat_history/', get_chat_history, name='get_chat_history'),
+    path('voice-to-text/', voice_to_text, name='voice_to_text'),
+    path('text-to-speech/', text_to_speech, name='text_to_speech'),
+    path('api/upload', handle_file_upload, name='handle_upload'),
 
 
-]
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
